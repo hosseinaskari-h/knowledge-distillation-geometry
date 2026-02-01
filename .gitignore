@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+data/
+experiments/
+*.png
+*.html
+.DS_Store

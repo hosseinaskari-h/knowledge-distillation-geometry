@@ -1,0 +1,5 @@
+# Constrained environment with limits
+type: "freeform"
+warmup_steps: 3
+max_turns: 15
+prompt_file: null

@@ -1,0 +1,28 @@
+# Layered non-anthropocentric reward
+# Combines information theory, geometry, and dynamics
+# NO language evaluation
+
+lr: 1.0e-4
+gamma: 0.99
+value_coef: 0.5
+entropy_coef: 0.01
+grad_clip: 0.5
+warmup_steps: 5
+
+reward:
+  type: "layered"
+
+  # Component weights
+  info_weight: 0.4
+  geom_weight: 0.3
+  dynamics_weight: 0.3
+
+  # Geometry targets (from thesis findings - testing if they emerge)
+  target_dimension: 6.0
+  target_ricci: 0.514
+  buffer_size: 100
+
+  # Predictor config
+  hidden_dim: 768
+  predictor_hidden: 512
+  predictor_lr: 1.0e-4

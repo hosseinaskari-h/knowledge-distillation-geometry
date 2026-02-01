@@ -1,0 +1,19 @@
+# Information bottleneck reward
+# Focuses on compression while maintaining relevance
+
+lr: 1.0e-4
+gamma: 0.99
+value_coef: 0.5
+entropy_coef: 0.01
+grad_clip: 0.5
+warmup_steps: 5
+
+reward:
+  type: "pure_embedding"
+
+  # Emphasize compression
+  predictability_weight: 0.2
+  information_weight: 0.3
+  compression_weight: 0.35
+  diversity_weight: 0.05
+  temporal_weight: 0.1

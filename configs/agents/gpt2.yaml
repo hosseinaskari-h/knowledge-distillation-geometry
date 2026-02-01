@@ -1,0 +1,11 @@
+type: "hf_agent"
+model: "gpt2"
+device: "cuda"
+save_hidden_states: true
+save_attentions: false
+
+generation:
+  max_new_tokens: 50
+  temperature: 0.8
+  do_sample: true
+  top_p: 0.95

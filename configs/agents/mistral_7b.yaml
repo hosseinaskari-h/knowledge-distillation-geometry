@@ -1,0 +1,13 @@
+# Mistral 7B configuration
+# Requires significant VRAM - use with 4-bit quantization for 8GB VRAM
+type: "hf_agent"
+model: "mistralai/Mistral-7B-v0.1"
+device: "cuda"
+save_hidden_states: false  # Disable to save memory
+save_attentions: false
+
+generation:
+  max_new_tokens: 50
+  temperature: 0.8
+  do_sample: true
+  top_p: 0.95

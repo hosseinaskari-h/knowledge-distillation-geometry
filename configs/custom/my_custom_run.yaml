@@ -1,0 +1,54 @@
+# Custom Experiment: my_custom_run
+experiment:
+  name: my_custom_run
+
+agents:
+  agent_a:
+    type: hf_causal
+    model_name: gpt2
+    device: cuda
+    generation:
+      max_new_tokens: 150
+      temperature: 0.800000011920929
+      top_p: 0.8999999761581421
+      top_k: 50
+      do_sample: true
+
+  agent_b:
+    type: hf_causal
+    model_name: EleutherAI/gpt-neo-1.3B
+    device: cuda
+    generation:
+      max_new_tokens: 150
+      temperature: 0.800000011920929
+      top_p: 0.8999999761581421
+      top_k: 50
+      do_sample: true
+
+environment:
+  type: freeform
+  max_turns: 20
+  prompts:
+    - "The nature of consciousness is"
+    - "In the beginning there was"
+    - "Consider the following proposition:"
+    - "What exists beyond the boundaries of"
+    - "The relationship between mind and"
+
+training:
+  num_episodes: 300
+  lr: 9.999999747378752e-05
+  gamma: 0.99
+  value_coef: 0.5
+  entropy_coef: 0.01
+  checkpoint_interval: 150
+  save_interval: 10
+
+reward:
+  type: layered
+  weights:
+    information: 0.4000000059604645
+    geometric: 0.30000001192092896
+    dynamics: 0.30000001192092896
+
+seed: 67

@@ -1,0 +1,4 @@
+type: "freeform"
+warmup_steps: 5
+max_turns: 20
+prompt_file: null  # Use default prompts
