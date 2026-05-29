@@ -1,0 +1,218 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,calc}
+
+% Configuration
+\geometry{left=2.5cm, right=2.5cm, top=2.5cm, bottom=2.5cm}
+\hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue}
+
+% Code styling
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+\lstset{style=mystyle}
+
+\title{\textbf{Loom: The Geometric Distillation Project} \\ \Large A Comprehensive Deep Dive into Theory, Math, and Code}
+\author{Antigravity Agent (Google DeepMind)}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Introduction}
+Welcome to the comprehensive documentation for **Loom**. This document is designed to bridge the gap between "having no idea" and "expert understanding" of the research paper \textit{"Knowledge Distillation Preserves Representational Geometry"} and its codebase.
+
+We will cover three main pillars:
+\begin{enumerate}
+    \item \textbf{The Intuition:} What are we actually doing? (No math, just concepts).
+    \item \textbf{The Math:} We will build the mathematical framework from scratch, explaining every term (Manifolds, Attractors, Lyapunov Exponents) simply.
+    \item \textbf{The Code:} We will walk through the entire codebase, file by file, explaining how the Python code implements the math.
+\end{enumerate}
+
+\section{Part I: The Intuition (No Math)}
+
+\subsection{The Metaphor: Telepathy between Brains}
+Imagine two people. Person A speaks English. Person B speaks French. If they want to communicate, they must translate their thoughts into words (English/French), speak them, and the other person translates them back into thoughts. This is slow and lossy.
+
+Now, imagine we connect a wire directly from Person A's neurons to Person B's neurons. If Person A thinks of a "Cat", does Person B also see a "Cat"?
+\begin{itemize}
+    \item If their brains are wired the same way, \textbf{Yes}. This is "Synchronization".
+    \item If their brains are wired differently, Person B might smell "Toast" or feel "Fear". This is "Chaos".
+\end{itemize}
+
+\textbf{What is Loom?}
+Loom is a project that performs this "Telepathy Test" on AI models. Instead of letting them talk to each other with text (which is slow), we plug their "neural wires" (hidden states) into each other to see if they are compatible.
+
+\subsection{The Big Discovery}
+We found two shocking things:
+\begin{enumerate}
+    \item \textbf{Distillation works:} A tiny student model (DistilGPT-2) has a brain structure almost \textit{identical} to its giant teacher (GPT-2). They can communicate telepathically.
+    \item \textbf{Size breaks compatibility:} A Medium and a Small model from the same family cannot communicate. Their brain production lines are different.
+\end{enumerate}
+
+\newpage
+\section{Part II: The Math (Explained Simply)}
+
+To understand the paper, you need to understand three concepts: \textbf{Manifolds}, \textbf{Dynamical Systems}, and \textbf{Coupled Dynamics}.
+
+\subsection{1. The Manifold Hypothesis}
+\textbf{The Concept:}
+Imagine a crumpled sheet of paper.
+\begin{itemize}
+    \item It exists in a 3D room (Length, Width, Height).
+    \item But an ant walking on the paper only experiences 2 dimensions (Forward/Back, Left/Right).
+\end{itemize}
+
+Neural networks operate in massive dimensions (e.g., 768 dimensions). However, we believe all valid "thoughts" (like correct English sentences) lie on a low-dimensional "sheet" within that space. This sheet is called the \textbf{Manifold}.
+
+\textbf{In the Paper:}
+When we say "Geometry is preserved," we mean the "crumpled sheet" has the same shape in the Student model as it does in the Teacher model.
+
+\subsection{2. Dynamical Systems}
+A \textbf{Dynamical System} is anything that changes over time based on rules. Ideally, $x_{t+1} = F(x_t)$.
+\begin{itemize}
+    \item \textbf{State ($h$):} Where you are right now.
+    \item \textbf{Dynamics ($F$):} The rule that tells you where to go next.
+\end{itemize}
+
+\subsubsection{Attractors}
+Imagine rolling a marble into a bowl. No matter where you start, it ends up at the bottom. The bottom is an \textbf{Attractor}.
+In our AI models, if we let them loop, they settle into repeating patterns (Attractors). We measure the "dimension" of these patterns to see how complex they are.
+
+\subsubsection{Lyapunov Exponents ($\lambda$)}
+This measures the "Butterfly Effect". If two marbles start huge close together:
+\begin{itemize}
+    \item $\lambda < 0$: They get closer (Stability).
+    \item $\lambda > 0$: They fly apart (Chaos).
+\end{itemize}
+We found our models obey $\lambda \approx 0.1$, which is the "Edge of Chaos". This means they are stable enough to think, but flexible enough to be creative.
+
+\subsection{3. Coupled Dynamics (The Formula)}
+This is the core contribution of the paper.
+We take two models, $F_A$ and $F_B$. Normally, they run individually. We force them to swap states:
+
+\begin{equation}
+    h_A^{(t+1)} = F_A(h_B^{(t)})
+\end{equation}
+\begin{equation}
+    h_B^{(t+1)} = F_B(h_A^{(t)})
+\end{equation}
+
+This says: "Model A, take Model B's thought as your input. Model B, take Model A's thought as your input."
+If they synchronize ($\cos \theta \to 1$), it proves $F_A$ and $F_B$ are performing the same mathematical transformation.
+
+\newpage
+\section{Part III: The Codebase Breakdown}
+
+This section explains every key file in the \texttt{c:/loom/knowledge-distillation-geometry} directory.
+
+\subsection{Root Directory}
+
+\subsubsection{\texttt{run\_experiments.py}}
+\textbf{Role:} The Lab Bench.
+This script runs the 123 experiments mentioned in the paper.
+\begin{itemize}
+    \item \textbf{What it does:} It loads pairs of models (e.g., GPT-2 and DistilGPT-2), runs the "Coupled Dynamics" loop for 1000 steps, and saves the data.
+    \item \textbf{Key Function:} \texttt{run\_coupled\_dynamics()}. This function implements the math equation above.
+\end{itemize}
+
+\subsection{Directory: \texttt{src/analysis/}}
+This folder contains the "measuring tape" code.
+
+\subsubsection{\texttt{src/analysis/geometric.py}}
+\textbf{Role:} Analyzing Angles.
+\begin{itemize}
+    \item \textbf{Key Class:} \texttt{GeometricAnalyzer}
+    \item \textbf{Math:} Calculates $\cos \theta = \frac{A \cdot B}{\|A\| \|B\|}$.
+    \item \textbf{Why:} This tells us if the models are "pointing" in the same direction in thought-space.
+\end{itemize}
+
+\subsubsection{\texttt{src/analysis/cka.py}}
+\textbf{Role:} The "Old" Metric.
+\begin{itemize}
+    \item \textbf{Key Class:} \texttt{CKA}
+    \item \textbf{Math:} Centered Kernel Alignment. It's complex, but basically compares correlation matrices.
+    \item \textbf{Why:} We use this to compare against our new method. We prove this file gives the \textit{wrong answer} in the paper (it says incompatible models are compatible).
+\end{itemize}
+
+\subsubsection{\texttt{src/analysis/temporal.py}}
+\textbf{Role:} Analyzing Time/Chaos.
+\begin{itemize}
+    \item \textbf{Key Function:} \texttt{compute\_lyapunov\_exponent}
+    \item \textbf{Math:} Implements the Wolf Algorithm (1985) to estimate $\lambda$.
+    \item \textbf{Why:} To prove the models operate at the "Edge of Chaos".
+\end{itemize}
+
+\subsubsection{\texttt{src/analysis/dimensional.py}}
+\textbf{Role:} Analyzing Complexity.
+\begin{itemize}
+    \item \textbf{Key Function:} \texttt{correlation\_dimension}
+    \item \textbf{Math:} Grassberger-Procaccia algorithm.
+    \item \textbf{Why:} To measure the "fractal dimension" of the model's thoughts. We found $D_2 \approx 2$, meaning thoughts are very simple low-dimensional curves.
+\end{itemize}
+
+\subsection{Directory: \texttt{src/core/}}
+This folder defines the abstract concepts.
+
+\subsubsection{\texttt{src/core/agent.py}}
+\textbf{Role:} The Blueprint.
+\begin{itemize}
+    \item Defines what an "Agent" is (something that takes a state and gives a new state).
+\end{itemize}
+
+\subsection{Directory: \texttt{src/agents/}}
+\subsubsection{\texttt{src/agents/hf\_agent.py}}
+\textbf{Role:} The Translator.
+\begin{itemize}
+    \item \textbf{What it does:} It wraps HuggingFace models (like GPT-2) so they look like "Agents".
+    \item \textbf{Key Trick:} It extracts the \textit{hidden state} accurately, bypassing the final layer that turns thoughts into words.
+\end{itemize}
+
+\subsection{Directory: \texttt{src/training/}}
+\subsubsection{\texttt{src/training/vector\_dynamics.py}}
+\textbf{Role:} The Simulator.
+\begin{itemize}
+    \item \textbf{What it does:} It handles the raw vector math for broader experiments.
+\end{itemize}
+
+\section{Summary of Claims}
+If you remember nothing else, remember this:
+\begin{enumerate}
+    \item \textbf{Telepathy is Real (for AI):} We can connect wires between models.
+    \item \textbf{Distillation is Geometry:} Teaching a student preserves the teacher's geometry.
+    \item \textbf{CKA is Dead:} The old way of measuring similarity doesn't work for merging.
+\end{enumerate}
+
+\end{document}

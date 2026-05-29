@@ -78,6 +78,9 @@ try:
     from src.analysis.geometric import GeometricAnalyzer
     from src.analysis.temporal import TemporalAnalyzer
     from src.analysis.statistical import StatisticalTests
+    from src.analysis.cka import CKAAnalyzer, compute_model_cka
+    from src.analysis.perplexity import compute_perplexity, compute_stitched_perplexity
+    from src.analysis.merging import weight_merge, evaluate_weight_merge, compute_cos_theta
     import matplotlib.pyplot as plt
     HAS_PROJECT = True
 except ImportError as e:

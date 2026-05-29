@@ -1,7 +1,20 @@
 __pycache__/
 *.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
+.venv/
+venv/
+
+# Data & Results
 data/
 experiments/
 *.png
 *.html
 .DS_Store
+
+# IDE
+.vscode/
+.idea/

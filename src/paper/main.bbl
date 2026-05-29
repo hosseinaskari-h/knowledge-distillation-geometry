@@ -1,0 +1,329 @@
+\begin{thebibliography}{49}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Abnar et~al.(2019)Abnar, Beinborn, Choenni, and
+  Zuidema]{abnar2019blackbox}
+Samira Abnar, Lisa Beinborn, Rochelle Choenni, and Willem Zuidema.
+\newblock Blackbox meets blackbox: Representational similarity \& stability
+  analysis of neural language models and brains.
+\newblock In \emph{Proceedings of the 2019 ACL Workshop BlackboxNLP: Analyzing
+  and Interpreting Neural Networks for NLP}, pp.\  191--203, 2019.
+
+\bibitem[Ainsworth et~al.(2023)Ainsworth, Hayase, and
+  Srinivasa]{ainsworth2023git}
+Samuel~K Ainsworth, Jonathan Hayase, and Siddhartha Srinivasa.
+\newblock Git re-basin: Merging models modulo permutation symmetries.
+\newblock In \emph{International Conference on Learning Representations}, 2023.
+
+\bibitem[Bansal et~al.(2021)Bansal, Nakkiran, and Barak]{bansal2021stitching}
+Yamini Bansal, Preetum Nakkiran, and Boaz Barak.
+\newblock Revisiting model stitching to compare neural representations.
+\newblock In \emph{Advances in Neural Information Processing Systems}, 2021.
+
+\bibitem[Bertschinger \& Natschl{\"a}ger(2004)Bertschinger and
+  Natschl{\"a}ger]{bertschinger2004real}
+Nils Bertschinger and Thomas Natschl{\"a}ger.
+\newblock Real-time computation at the edge of chaos in recurrent neural
+  networks.
+\newblock \emph{Neural Computation}, 16\penalty0 (7):\penalty0 1413--1436,
+  2004.
+
+\bibitem[Cai et~al.(2021)Cai, Huang, Bian, and Church]{cai2021isotropy}
+Xingyu Cai, Jiaji Huang, Yuchen Bian, and Kenneth Church.
+\newblock Isotropy in the contextual embedding space: Clusters and manifolds.
+\newblock In \emph{International Conference on Learning Representations}, 2021.
+
+\bibitem[Chen et~al.(2018)Chen, Rubanova, Bettencourt, and
+  Duvenaud]{chen2018neuralode}
+Ricky T.~Q. Chen, Yulia Rubanova, Jesse Bettencourt, and David~K Duvenaud.
+\newblock Neural ordinary differential equations.
+\newblock In \emph{Advances in Neural Information Processing Systems}, 2018.
+
+\bibitem[Davari et~al.(2023)Davari, Rame, Cord, and Alizadeh]{davari2023model}
+Alexandre Davari, Alexandre Rame, Matthieu Cord, and Milad Alizadeh.
+\newblock Model ratatouille: Recycling diverse models for out-of-distribution
+  generalization.
+\newblock In \emph{International Conference on Machine Learning}, 2023.
+
+\bibitem[Dehghani et~al.(2019)Dehghani, Gouws, Vinyals, Uszkoreit, and
+  Kaiser]{dehghani2019universal}
+Mostafa Dehghani, Stephan Gouws, Oriol Vinyals, Jakob Uszkoreit, and {\L}ukasz
+  Kaiser.
+\newblock Universal transformers.
+\newblock In \emph{International Conference on Learning Representations}, 2019.
+
+\bibitem[Ding et~al.(2021)Ding, Denain, and Steinhardt]{ding2021grounding}
+Frances Ding, Jean-Stanislas Denain, and Jacob Steinhardt.
+\newblock Grounding representation similarity through statistical testing.
+\newblock In \emph{Advances in Neural Information Processing Systems}, 2021.
+
+\bibitem[Elhage et~al.(2021)Elhage, Nanda, Olsson, Henighan, Joseph, Mann,
+  Askell, Bai, Chen, Conerly, et~al.]{elhage2021mathematical}
+Nelson Elhage, Neel Nanda, Catherine Olsson, Tom Henighan, Nicholas Joseph, Ben
+  Mann, Amanda Askell, Yuntao Bai, Anna Chen, Tom Conerly, et~al.
+\newblock A mathematical framework for transformer circuits.
+\newblock \emph{Anthropic}, 2021.
+
+\bibitem[Entezari et~al.(2022)Entezari, Sedghi, Saukh, and
+  Neyshabur]{entezari2022role}
+Rahim Entezari, Hanie Sedghi, Olga Saukh, and Behnam Neyshabur.
+\newblock The role of permutation invariance in linear mode connectivity of
+  neural networks.
+\newblock In \emph{International Conference on Learning Representations}, 2022.
+
+\bibitem[Ethayarajh(2019)]{ethayarajh2019contextual}
+Kawin Ethayarajh.
+\newblock How contextual are contextualized word representations? comparing the
+  geometry of {BERT}, {ELMo}, and {GPT}-2 representations.
+\newblock \emph{Proceedings of the 2019 Conference on Empirical Methods in
+  Natural Language Processing}, 2019.
+
+\bibitem[Frankle et~al.(2020)Frankle, Dziugaite, Roy, and
+  Carbin]{frankle2020linear}
+Jonathan Frankle, Gintare~Karolina Dziugaite, Daniel Roy, and Michael Carbin.
+\newblock Linear mode connectivity and the lottery ticket hypothesis.
+\newblock In \emph{International Conference on Machine Learning}, 2020.
+
+\bibitem[Geshkovski et~al.(2024)Geshkovski, Letrouit, Polyanskiy, and
+  Rigollet]{geshkovski2024mathematical}
+Borjan Geshkovski, Cyril Letrouit, Yury Polyanskiy, and Philippe Rigollet.
+\newblock A mathematical perspective on transformers.
+\newblock \emph{Bulletin of the American Mathematical Society}, 61\penalty0
+  (4):\penalty0 375--403, 2024.
+
+\bibitem[Gou et~al.(2021)Gou, Yu, Maybank, and Tao]{gou2021knowledge}
+Jianping Gou, Baosheng Yu, Stephen~J Maybank, and Dacheng Tao.
+\newblock Knowledge distillation: A survey.
+\newblock \emph{International Journal of Computer Vision}, 129\penalty0
+  (6):\penalty0 1789--1819, 2021.
+
+\bibitem[Grassberger \& Procaccia(1983)Grassberger and
+  Procaccia]{grassberger1983}
+Peter Grassberger and Itamar Procaccia.
+\newblock Characterization of strange attractors.
+\newblock \emph{Physical Review Letters}, 50\penalty0 (5):\penalty0 346--349,
+  1983.
+
+\bibitem[Haber \& Ruthotto(2017)Haber and Ruthotto]{haber2017stable}
+Eldad Haber and Lars Ruthotto.
+\newblock Stable architectures for deep neural networks.
+\newblock \emph{Inverse Problems}, 34\penalty0 (1):\penalty0 014004, 2017.
+
+\bibitem[Hao et~al.(2024)Hao, Sukhbaatar, Su, Li, Hu, Weston, and
+  Tian]{hao2024coconut}
+Shibo Hao, Sainbayar Sukhbaatar, DiJia Su, Xian Li, Zhiting Hu, Jason Weston,
+  and Yuandong Tian.
+\newblock Training large language models to reason in a continuous latent
+  space.
+\newblock \emph{arXiv preprint arXiv:2412.06769}, 2024.
+
+\bibitem[Hauser et~al.(2021)Hauser, Meng, et~al.]{hauser2021similar}
+A.~Hauser, X.~Meng, et~al.
+\newblock Similar but not the same: Understanding representations in neural
+  networks.
+\newblock In \emph{International Conference on Learning Representations}, 2021.
+
+\bibitem[Hinton et~al.(2015)Hinton, Vinyals, and Dean]{hinton2015distilling}
+Geoffrey Hinton, Oriol Vinyals, and Jeff Dean.
+\newblock Distilling the knowledge in a neural network.
+\newblock \emph{arXiv preprint arXiv:1503.02531}, 2015.
+
+\bibitem[Hosseini \& Fedorenko(2023)Hosseini and
+  Fedorenko]{hosseini2023straightening}
+Eghbal Hosseini and Evelina Fedorenko.
+\newblock Large language models implicitly learn to straighten neural sentence
+  trajectories to construct a predictive representation of natural language.
+\newblock In \emph{Advances in Neural Information Processing Systems},
+  volume~36, 2023.
+
+\bibitem[Ilharco et~al.(2023)Ilharco, Ribeiro, Wortsman, Gontijo-Lopes,
+  Schmidt, and Hajishirzi]{ilharco2023task}
+Gabriel Ilharco, Marco~Tulio Ribeiro, Mitchell Wortsman, Raphael Gontijo-Lopes,
+  Ludwig Schmidt, and Hannaneh Hajishirzi.
+\newblock Editing models with task arithmetic.
+\newblock In \emph{International Conference on Learning Representations}, 2023.
+
+\bibitem[Jacot et~al.(2018)Jacot, Gabriel, and Hongler]{jacot2018neural}
+Arthur Jacot, Franck Gabriel, and Cl{\'e}ment Hongler.
+\newblock Neural tangent kernel: Convergence and generalization in neural
+  networks.
+\newblock In \emph{Advances in Neural Information Processing Systems}, 2018.
+
+\bibitem[Jiao et~al.(2022)]{jiao2022revisiting}
+Wenxiang Jiao et~al.
+\newblock Knowledge distillation of transformer-based language models
+  revisited.
+\newblock In \emph{Proceedings of the 60th Annual Meeting of the Association
+  for Computational Linguistics}, 2022.
+
+\bibitem[Jordan et~al.(2023)Jordan, Sedghi, Saukh, Entezari, and
+  Neyshabur]{jordan2023repair}
+Keller Jordan, Hanie Sedghi, Olga Saukh, Rahim Entezari, and Behnam Neyshabur.
+\newblock {REPAIR}: {RE}normalizing permuted activations for interpolation
+  repair.
+\newblock In \emph{International Conference on Learning Representations}, 2023.
+
+\bibitem[Kaplan et~al.(2020)Kaplan, McCandlish, Henighan, Brown,
+  et~al.]{kaplan2020scaling}
+Jared Kaplan, Sam McCandlish, Tom Henighan, Tom~B Brown, et~al.
+\newblock Scaling laws for neural language models.
+\newblock \emph{arXiv preprint arXiv:2001.08361}, 2020.
+
+\bibitem[Klabunde et~al.(2023)Klabunde, Schumacher, Strohmaier, and
+  Lemmerich]{klabunde2023similarity}
+Max Klabunde, Tobias Schumacher, Markus Strohmaier, and Florian Lemmerich.
+\newblock Similarity of neural network models: A survey of functional and
+  representational measures.
+\newblock \emph{arXiv preprint arXiv:2305.06329}, 2023.
+
+\bibitem[Kornblith et~al.(2019)Kornblith, Norouzi, Lee, and
+  Hinton]{kornblith2019similarity}
+Simon Kornblith, Mohammad Norouzi, Honglak Lee, and Geoffrey Hinton.
+\newblock Similarity of neural network representations revisited.
+\newblock In \emph{International Conference on Machine Learning}, 2019.
+
+\bibitem[Kuramoto(1984)]{kuramoto1984chemical}
+Yoshiki Kuramoto.
+\newblock \emph{Chemical Oscillations, Waves, and Turbulence}.
+\newblock Springer, 1984.
+
+\bibitem[Langton(1990)]{langton1990computation}
+Christopher~G Langton.
+\newblock Computation at the edge of chaos: Phase transitions and emergent
+  computation.
+\newblock \emph{Physica D: Nonlinear Phenomena}, 42\penalty0 (1-3):\penalty0
+  12--37, 1990.
+
+\bibitem[Li et~al.(2020)Li, Wang, Wang, Li, Yang, and Wang]{li2019deepgkd}
+Yuntao Li, Yi~Wang, Weiyao Wang, He~Li, Jian Yang, and Xiaoyun Wang.
+\newblock Deep geometric knowledge distillation with graphs.
+\newblock In \emph{IEEE Conference on Computer Vision and Pattern Recognition},
+  2020.
+
+\bibitem[Liu et~al.(2023)]{liu2023embeddistill}
+Zheng Liu et~al.
+\newblock Embeddistill: A geometric knowledge distillation for information
+  retrieval.
+\newblock In \emph{ACM SIGIR Conference on Research and Development in
+  Information Retrieval}, 2023.
+
+\bibitem[Lu et~al.(2020)Lu, Li, He, Sun, Dong, Qin, Wang, and
+  Liu]{lu2020understanding}
+Yiping Lu, Zhuohan Li, Di~He, Zhiqing Sun, Bin Dong, Tao Qin, Liwei Wang, and
+  Tie-Yan Liu.
+\newblock Understanding and improving transformer from a multi-particle dynamic
+  system point of view.
+\newblock In \emph{International Conference on Learning Representations}, 2020.
+
+\bibitem[Moschella et~al.(2023)Moschella, Maiorca, Fumero, Norelli, Locatello,
+  and Rodol{\`a}]{moschella2023relative}
+Luca Moschella, Valentino Maiorca, Marco Fumero, Antonio Norelli, Francesco
+  Locatello, and Emanuele Rodol{\`a}.
+\newblock Relative representations enable zero-shot latent space communication.
+\newblock In \emph{International Conference on Learning Representations}, 2023.
+
+\bibitem[Nguyen et~al.(2021)Nguyen, Raghu, and Kornblith]{nguyen2021wide}
+Thao Nguyen, Maithra Raghu, and Simon Kornblith.
+\newblock Do wide and deep networks learn the same things? uncovering how
+  neural network representations vary with width and depth.
+\newblock In \emph{International Conference on Learning Representations}, 2021.
+
+\bibitem[Packard(1988)]{packard1988adaptation}
+Norman~H Packard.
+\newblock Adaptation toward the edge of chaos.
+\newblock In \emph{Dynamic Patterns in Complex Systems}, pp.\  293--301. World
+  Scientific, 1988.
+
+\bibitem[Pecora \& Carroll(1990)Pecora and Carroll]{pecora1990}
+Louis~M Pecora and Thomas~L Carroll.
+\newblock Synchronization in chaotic systems.
+\newblock \emph{Physical Review Letters}, 64\penalty0 (8):\penalty0 821--824,
+  1990.
+
+\bibitem[Raghu et~al.(2017)Raghu, Gilmer, Yosinski, and
+  Sohl-Dickstein]{raghu2017svcca}
+Maithra Raghu, Justin Gilmer, Jason Yosinski, and Jascha Sohl-Dickstein.
+\newblock Svcca: Singular vector canonical correlation analysis for deep
+  learning dynamics and interpretability.
+\newblock In \emph{Advances in Neural Information Processing Systems}, 2017.
+
+\bibitem[Romero et~al.(2015)Romero, Ballas, Kahou, Chassang, Gatta, and
+  Bengio]{romero2015fitnets}
+Adriana Romero, Nicolas Ballas, Samira~Ebrahimi Kahou, Antoine Chassang, Carlo
+  Gatta, and Yoshua Bengio.
+\newblock Fitnets: Hints for thin deep nets.
+\newblock In \emph{International Conference on Learning Representations}, 2015.
+
+\bibitem[Sanh et~al.(2019)Sanh, Debut, Chaumond, and Wolf]{sanh2019distilbert}
+Victor Sanh, Lysandre Debut, Julien Chaumond, and Thomas Wolf.
+\newblock Distilbert, a distilled version of bert: Smaller, faster, cheaper and
+  lighter.
+\newblock \emph{arXiv preprint arXiv:1910.01108}, 2019.
+
+\bibitem[Singh \& Jaggi(2020)Singh and Jaggi]{singh2020model}
+Sidak~Pal Singh and Martin Jaggi.
+\newblock Model fusion via optimal transport.
+\newblock In \emph{Advances in Neural Information Processing Systems}, 2020.
+
+\bibitem[Strogatz(2000)]{strogatz2000}
+Steven~H Strogatz.
+\newblock From kuramoto to crawford: Exploring the onset of synchronization in
+  populations of coupled oscillators.
+\newblock \emph{Physica D: Nonlinear Phenomena}, 143\penalty0 (1-4):\penalty0
+  1--20, 2000.
+
+\bibitem[Tsai et~al.(2019)Tsai, Bai, Yamada, Morency, and
+  Salakhutdinov]{tsai2019transformer}
+Yao-Hung~Hubert Tsai, Shaojie Bai, Makoto Yamada, Louis-Philippe Morency, and
+  Ruslan Salakhutdinov.
+\newblock Transformer dissection: A unified understanding for transformer's
+  attention via the lens of kernel.
+\newblock In \emph{Empirical Methods in Natural Language Processing}, 2019.
+
+\bibitem[Wolf et~al.(1985)Wolf, Swift, Swinney, and Vastano]{wolf1985}
+Alan Wolf, Jack~B Swift, Harry~L Swinney, and John~A Vastano.
+\newblock Determining lyapunov exponents from a time series.
+\newblock \emph{Physica D: Nonlinear Phenomena}, 16\penalty0 (3):\penalty0
+  285--317, 1985.
+
+\bibitem[Wortsman et~al.(2022)Wortsman, Ilharco, Gadre, Roelofs, Gontijo-Lopes,
+  Morcos, Namkoong, Farhadi, Carmon, Kornblith, and Schmidt]{wortsman2022model}
+Mitchell Wortsman, Gabriel Ilharco, Samir~Ya Gadre, Rebecca Roelofs, Raphael
+  Gontijo-Lopes, Ari~S Morcos, Hongseok Namkoong, Ali Farhadi, Yair Carmon,
+  Simon Kornblith, and Ludwig Schmidt.
+\newblock Model soups: Averaging weights of multiple fine-tuned models improves
+  accuracy without increasing inference time.
+\newblock In \emph{International Conference on Machine Learning}, 2022.
+
+\bibitem[Yadav et~al.(2023)Yadav, Tam, Choshen, Raffel, and
+  Bansal]{yadav2023ties}
+Prateek Yadav, Derek Tam, Leshem Choshen, Colin Raffel, and Mohit Bansal.
+\newblock Resolving interference when merging models.
+\newblock In \emph{Advances in Neural Information Processing Systems},
+  volume~36, 2023.
+
+\bibitem[Yu et~al.(2024)Yu, Yu, Yu, Huang, and Li]{yu2024dare}
+Le~Yu, Bowen Yu, Haiyang Yu, Fei Huang, and Yongbin Li.
+\newblock Language models are super {M}ario: Absorbing abilities from
+  homologous models as a free lunch.
+\newblock In \emph{International Conference on Machine Learning}, 2024.
+
+\bibitem[Yuan et~al.(2021)]{yuan2021manifoldkd}
+Li~Yuan et~al.
+\newblock Learning efficient vision transformers via fine-grained manifold
+  distillation.
+\newblock In \emph{Advances in Neural Information Processing Systems}, 2021.
+
+\bibitem[Zhou et~al.(2024)Zhou, Liu, Wang, Anandkumar, Bai, and
+  Keutzer]{zhou2024crosslmc}
+Daquan Zhou, Zhiding Liu, Hongxu Wang, Animashree Anandkumar, Song Bai, and
+  Kurt Keutzer.
+\newblock A closer look at the cka similarity index and the linear mode
+  connectivity.
+\newblock In \emph{International Conference on Learning Representations}, 2024.
+
+\end{thebibliography}

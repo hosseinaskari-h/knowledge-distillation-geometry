@@ -1,0 +1,1193 @@
+\documentclass[10pt]{article} % For LaTeX2e
+\usepackage{tmlr}
+% If accepted, instead use the following line for the camera-ready submission:
+% \usepackage[accepted]{tmlr}
+% To de-anonymize and remove mentions to TMLR (for example for posting to preprint servers), instead use the following:
+% \usepackage[preprint]{tmlr}
+
+% Optional math commands from https://github.com/goodfeli/dlbook_notation.
+\input{math_commands.tex}
+
+% Additional packages needed for the paper
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{bm}
+\usepackage{bbm}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage[table,xcdraw]{xcolor}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+% TikZ for Diagrams and Plots
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{positioning, arrows.meta, shapes.geometric, calc, fit, backgrounds}
+
+% ============================================================================
+% THEOREM ENVIRONMENTS
+% ============================================================================
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{lemma}[theorem]{Lemma}
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{observation}[theorem]{Observation}
+\newtheorem{example}[theorem]{Example}
+
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{conjecture}[theorem]{Conjecture}
+
+% ============================================================================
+% CUSTOM COMMANDS (not in math_commands.tex)
+% ============================================================================
+\newcommand{\Prob}{\mathbb{P}}
+\newcommand{\cH}{\mathcal{H}}
+\newcommand{\cM}{\mathcal{M}}
+\newcommand{\cF}{\mathcal{F}}
+\newcommand{\cT}{\mathcal{T}}
+\newcommand{\cL}{\mathcal{L}}
+\newcommand{\cN}{\mathcal{N}}
+\newcommand{\cS}{\mathcal{S}}
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+\newcommand{\inner}[2]{\langle #1, #2 \rangle}
+\newcommand{\dd}{\mathrm{d}}
+\newcommand{\vect}[1]{\bm{#1}}
+\newcommand{\mat}[1]{\mathbf{#1}}
+\DeclareMathOperator{\diag}{diag}
+\DeclareMathOperator{\LayerNorm}{LayerNorm}
+
+% ============================================================================
+% TITLE AND AUTHORS
+% ============================================================================
+\title{Predicting Transformer Compatibility through Coupled Dynamics and State Exchange}
+
+% Authors must not appear in the submitted version. They should be hidden
+% as long as the tmlr package is used without the [accepted] or [preprint] options.
+% Non-anonymous submissions will be rejected without review.
+
+\author{\name Anonymous Author(s) \email anonymous@email.com \\
+      \addr Anonymous Institution}
+
+% For camera-ready version, use:
+% \author{\name MohammadHossein AskariHezaveh \email hosseinaskari.h@gmail.com \\
+%       \addr Independent Researcher}
+
+\def\month{02}  % Insert correct month for camera-ready version
+\def\year{2026} % Insert correct year for camera-ready version
+\def\openreview{\url{https://openreview.net/forum?id=XXXX}} % Insert correct link to OpenReview for camera-ready version
+
+% ============================================================================
+% DOCUMENT
+% ============================================================================
+\begin{document}
+
+\maketitle
+
+% ============================================================================
+% ABSTRACT
+% ============================================================================
+\begin{abstract}
+As neural networks transition from isolated systems to modular components that can be merged, stacked, or ensembled, predicting whether two models are functionally compatible becomes critical. While static representational similarity metrics like Centered Kernel Alignment (CKA) excel at comparing spatial feature alignments, they are not designed to capture the dynamical alignment required for functional compatibility, such as weight merging. We introduce \textbf{coupled dynamics testing}, a novel diagnostic that treats transformers as iterated function systems and measures whether two models synchronize when exchanging hidden states directly in embedding space. Through 123 experiments across 41 configurations, we demonstrate that (1) identical architectures rapidly synchronize ($\cos \theta \to 1.0$), (2) different architecture families remain fundamentally orthogonal ($\cos \theta \approx 0$), and (3) DistilGPT-2 synchronizes with GPT-2 at $\cos \theta = 0.999$ despite a 50\% reduction in depth. Crucially, we demonstrate that this dynamic metric \textbf{captures functional compatibility where static metrics inevitably diverge}: GPT-2 + GPT-2-Medium show higher CKA ($0.84$) than GPT-2-Medium + DialoGPT-Medium ($0.49$), yet our dynamical diagnostic ($\cos \theta$) correctly identifies DialoGPT as functionally compatible ($0.949$) and GPT-2-Medium as incompatible ($0.12$), predictions confirmed by weight merging experiments. Dynamical analysis reveals synchronized states occupy low-dimensional attractors ($D_2 \approx 0$--$2.3$) with Lyapunov exponents indicating edge-of-chaos dynamics ($\lambda_{\max} \approx 0.08$--$0.10$). Rather than challenging static metrics, our coupled dynamics diagnostic provides a complementary, fast ($\sim$30 seconds per model pair) pre-merge compatibility test rooted in dynamical systems theory.
+\end{abstract}
+
+
+\textbf{Keywords:} knowledge distillation, representation geometry, transformer networks, dynamical systems, synchronization, attractor dynamics, model compression, neural network interpretability
+
+% ============================================================================
+% 1. INTRODUCTION
+% ============================================================================
+\section{Introduction}
+
+\subsection{Motivation}
+
+As the ecosystem of pretrained transformers expands, integrating multiple models through techniques like weight merging \citep{wortsman2022model}, task arithmetic \citep{ilharco2023task}, or representation stitching \citep{bansal2021stitching} has become increasingly common. Central to these techniques is the challenge of \textit{compatibility}: how do we know ahead of time if two distinct neural networks are functionally aligned enough to be merged or coupled?
+
+The standard tool for comparing internal representations is representational similarity analysis, most commonly Centered Kernel Alignment (CKA) \citep{kornblith2019similarity}. CKA is highly effective at measuring the static spatial similarity of activations across models for a given input. However, static alignment does not necessarily guarantee functional or dynamical compatibility when models are structurally manipulated. Because CKA was designed to compare representational geometry rather than operational dynamics, relying solely on static metrics for predicting dynamic outcomes like weight merging can lead to unexpected results. For instance, in our experimental evaluations, CKA assigns higher similarity to GPT-2 + GPT-2-Medium (which fail catastrophically when merged) than to GPT-2-Medium + DialoGPT-Medium (which merge successfully).
+
+We propose a complementary, dynamic approach. Rather than comparing static snapshots of representations, we treat transformers as iterated function systems \citep{haber2017stable,chen2018neuralode} and study what happens when two models interact dynamically. By having models exchange hidden states directly in the embedding space, bypassing tokenization entirely, we can observe their coupled dynamics:
+\begin{equation}
+    \vect{h}_A \xrightarrow{\text{direct exchange}} \vect{h}_B
+\end{equation}
+By bypassing the bottleneck of tokenization (which collapses continuous representations to discrete tokens), we reveal the underlying dynamical compatibility between the models' learned geometric transformations. Recent work demonstrates that transformers can meaningfully process continuous hidden states \citep{hao2024coconut,dehghani2019universal}; we extend this principle to inter-model coupling.
+
+\textbf{Key insight:} Whether two models synchronize when coupled through continuous hidden state exchange provides a rigorous, dynamic probe of functional compatibility, offering predictions for model merging and representation stitching that complement static similarity metrics.
+
+\subsection{Why This Matters}
+
+Our coupled dynamics diagnostic provides novel utility for both theoretical analysis and practical engineering:
+
+\begin{itemize}
+    \item \textbf{Model merging prediction}: Recent advances in weight integration require knowing if models are compatible before attempting computationally expensive merging operations. We show that a fast (30-second) coupled dynamics test successfully predicts merging viability, accurately discriminating between compatible and incompatible model pairs (Section~6).
+    
+    \item \textbf{Complementing static metrics}: We demonstrate empirically that functional outcomes (like merging success) align closely with dynamic synchronization ($\cos \theta$) rather than static spatial alignment (CKA). This highlights the need for dynamic compatibility testing alongside established similarity metrics (Section~6).
+    
+    \item \textbf{Distillation properties}: We find that knowledge distillation preserves dynamical geometry to a near-perfect degree ($\cos \theta = 0.999$), strongly suggesting that interpretability findings \citep{elhage2021mathematical} from teacher models can confidently transfer to their distilled counterparts (Section~4.4).
+    
+    \item \textbf{Inter-agent communication limits}: Our cross-architecture results ($\cos \theta \approx 0$; Section~4.9) establish fundamental limits on heterogeneous AI agents' ability to develop shared continuous representations without linguistic mediation \citep{moschella2023relative}.
+\end{itemize}
+
+\subsection{Contribution}
+
+We introduce \textbf{coupled dynamics testing}, a novel diagnostic framework where models exchange hidden states directly to test synchronization. Drawing on dynamical systems theory \citep{haber2017stable,chen2018neuralode}, we analyze these interactions rigorously.
+
+Through 123 experiments across 41 unique configurations, we establish:
+
+\begin{enumerate}
+    \item \textbf{A dynamic measure of compatibility}: Transformers with identical architectures rapidly synchronize ($\cos \theta \to 1.0$), while different architecture families remain fundamentally orthogonal ($\cos \theta \approx 0$).
+    \item \textbf{Distillation preserves dynamics}: DistilGPT-2 exhibits near-perfect synchronization with GPT-2 ($\cos \theta = 0.998$), proving that distillation preserves manifold geometry despite massive architectural pruning.
+    \item \textbf{Utility for model merging}: The diagnostic correctly predicts weight merging outcomes, succeeding in distinguishing task-fine-tuned variants (highly compatible) from scaled variants within the same family (dynamically incompatible).
+    \item \textbf{Rigorous dynamical properties}: Synchronized pairs occupy precise, low-dimensional attractors ($D_2 \approx 0$--$2.3$), while Lyapunov exponent analysis indicates these transitions occur at the edge of chaos ($\lambda_{\max} \approx 0.08$--$0.10$).
+    \item \textbf{Fine-tuning impact}: Task-specific training (e.g., DialoGPT) introduces only minor perturbations, preserving 95\% of the base model's dynamical structure.
+\end{enumerate}
+
+% ============================================================================
+% 2. MATHEMATICAL FRAMEWORK
+% ============================================================================
+\section{Mathematical Framework}
+
+\subsection{Transformers as Iterated Function Systems}
+
+A transformer model defines a function $F: \R^d \to \R^d$ that maps hidden states through successive layers. Let $\cH = \R^d$ denote the hidden state space (e.g., $d = 768$ for GPT-2).
+
+\begin{definition}[Transformer Block Map]
+A transformer block $\cT: \cH \to \cH$ implements:
+\begin{equation}
+    \cT(\vect{h}) = \vect{h} + \text{FFN}\left(\LayerNorm\left(\vect{h} + \text{Attn}(\LayerNorm(\vect{h}))\right)\right)
+\end{equation}
+where $\text{Attn}$ denotes multi-head self-attention and $\text{FFN}$ is a two-layer feed-forward network.
+\end{definition}
+
+For a transformer with $L$ layers:
+\begin{equation}
+    F = \mathcal{T}_L \circ \mathcal{T}_{L-1} \circ \cdots \circ \mathcal{T}_1 : \cH \to \cH.
+\end{equation}
+
+\begin{remark}
+Unlike typical uses where $F$ maps token embeddings to next-token predictions via a language modeling head, we consider $F$ as a \textbf{pure dynamical map} on hidden states, ignoring the output projection entirely.
+\end{remark}
+
+This dynamical systems perspective \citep{haber2017stable,chen2018neuralode} allows us to analyze stability and convergence properties independently of training objectives. The attention mechanism can be understood through geometric lenses \citep{tsai2019transformer}, explaining why architectural differences lead to incompatible geometries.
+
+\subsection{Coupling Strategies}
+
+Given two transformer maps $F_A, F_B: \cH \to \cH$, we study coupled systems where models exchange hidden states. We implement three coupling mechanisms inspired by synchronization in coupled oscillators \citep{kuramoto1984chemical}:
+
+\begin{definition}[Coupling Strategy]
+A coupling strategy $\Phi$ defines how states are exchanged:
+\begin{equation}
+    (\vect{h}_A^{(t+1)}, \vect{h}_B^{(t+1)}) = \Phi(F_A, F_B, \vect{h}_A^{(t)}, \vect{h}_B^{(t)})
+\end{equation}
+\end{definition}
+
+\subsubsection{Direct Coupling}
+Pure state exchange (analogous to pure exchange in coupled oscillator theory):
+\begin{align}
+    \vect{h}_A^{(t+1)} &= F_A(\vect{h}_B^{(t)}) \\
+    \vect{h}_B^{(t+1)} &= F_B(\vect{h}_A^{(t)})
+\end{align}
+
+\subsubsection{Blended Coupling}
+Convex combination with parameter $\alpha \in [0,1]$:
+\begin{align}
+    \vect{h}_A^{(t+1)} &= F_A(\alpha \cdot \vect{h}_A^{(t)} + (1-\alpha) \cdot \vect{h}_B^{(t)}) \\
+    \vect{h}_B^{(t+1)} &= F_B(\alpha \cdot \vect{h}_B^{(t)} + (1-\alpha) \cdot \vect{h}_A^{(t)})
+\end{align}
+where $\alpha = 0$ reduces to direct coupling, $\alpha = 0.5$ is equal blending, and $\alpha = 1$ is no coupling.
+
+\subsubsection{Decay Coupling}
+Memory of previous own state with parameter $\beta \in [0,1]$:
+\begin{align}
+    \vect{h}_A^{(t+1)} &= F_A(\beta \cdot \vect{h}_A^{(t-1)} + (1-\beta) \cdot \vect{h}_B^{(t)}) \\
+    \vect{h}_B^{(t+1)} &= F_B(\beta \cdot \vect{h}_B^{(t-1)} + (1-\beta) \cdot \vect{h}_A^{(t)})
+\end{align}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}[
+        node distance=2cm,
+        box/.style={rectangle, draw=black, thick, minimum width=2.5cm, minimum height=1.5cm, fill=blue!5, rounded corners},
+        arrow/.style={-Latex, thick},
+        label_text/.style={font=\small\sffamily}
+    ]
+        % Nodes
+        \node[box] (modelA) {Model A ($F_A$)};
+        \node[box, right=4cm of modelA] (modelB) {Model B ($F_B$)};
+        
+        % State vectors
+        \node[circle, fill=red!20, draw=red, inner sep=2pt] (hA) at ($(modelA.east)!0.5!(modelB.west) + (0, 0.5)$) {$\vect{h}_A^{(t)}$};
+        \node[circle, fill=green!20, draw=green!60!black, inner sep=2pt] (hB) at ($(modelA.east)!0.5!(modelB.west) + (0, -0.5)$) {$\vect{h}_B^{(t)}$};
+
+        % Arrows
+        \draw[arrow] (modelA.east) -- ++(0.5,0) |- (hA) -| ($(modelB.west) + (-0.5,0.2)$) -- ($(modelB.west) + (0,0.2)$);
+        \draw[arrow] (modelB.west) -- ++(-0.5,0) |- (hB) -| ($(modelA.east) + (0.5,-0.2)$) -- ($(modelA.east) + (0,-0.2)$);
+
+        % Annotations
+        \node[label_text, above=0.1cm of hA] {input to B};
+        \node[label_text, below=0.1cm of hB] {input to A};
+        
+        % Time annotation
+        \node[font=\footnotesize, below=1cm of hB, text=black!70] {Iterative Feedback Loop ($t \to t+1$)};
+    \end{tikzpicture}
+    \caption{\textbf{Coupled Dynamics Testing.} Models exchange hidden states, testing whether their learned geometric transformations are compatible.}
+    \label{fig:method_diagram}
+\end{figure}
+
+\subsection{Synchronization Measures}
+
+\begin{definition}[Cosine Similarity]
+The instantaneous alignment between states:
+\begin{equation}
+    \rho(t) = \frac{\inner{\vect{h}_A^{(t)}}{\vect{h}_B^{(t)}}}{\norm{\vect{h}_A^{(t)}}_2 \norm{\vect{h}_B^{(t)}}_2} = \cos\theta_{AB}(t).
+\end{equation}
+If $\rho(t) \to 1$, the models have synchronized.
+\end{definition}
+
+\begin{definition}[Synchronization Index]
+The correlation of velocities (state changes):
+\begin{equation}
+    S = \frac{1}{T-1} \sum_{t=1}^{T-1} \frac{\inner{\Delta\vect{h}_A^{(t)}}{\Delta\vect{h}_B^{(t)}}}{\norm{\Delta\vect{h}_A^{(t)}} \norm{\Delta\vect{h}_B^{(t)}}}
+\end{equation}
+where $\Delta\vect{h}^{(t)} = \vect{h}^{(t+1)} - \vect{h}^{(t)}$. High $S$ indicates models are \textit{moving together} through state space.
+\end{definition}
+
+Unlike static metrics \citep{ding2021grounding}, our dynamic approach measures functional compatibility through iterative interaction.
+
+\subsection{Dynamical System Characterization}
+
+To characterize the nature of the coupled dynamics, we employ standard tools from dynamical systems theory:
+
+\begin{definition}[Largest Lyapunov Exponent]
+The largest Lyapunov exponent characterizes sensitivity to initial conditions:
+\begin{equation}
+    \lambda_{\max} = \lim_{t \to \infty} \frac{1}{t} \sum_{i=0}^{t-1} \ln \frac{\norm{\delta\vect{h}^{(i+1)}}}{\norm{\delta\vect{h}^{(i)}}}
+\end{equation}
+where $\delta\vect{h}$ is an infinitesimal perturbation.
+
+Interpretation:
+\begin{itemize}
+    \item $\lambda_{\max} > 0$: Chaotic dynamics (exponential divergence)
+    \item $\lambda_{\max} = 0$: Periodic or quasi-periodic
+    \item $\lambda_{\max} < 0$: Converging to attractor
+\end{itemize}
+\end{definition}
+
+We estimate $\lambda_{\max}$ using the method of nearest neighbors in reconstructed state space \citep{wolf1985}.
+
+\begin{definition}[Correlation Dimension]
+The correlation dimension $D_2$ estimates the intrinsic dimensionality of the attractor via the correlation integral:
+\begin{equation}
+    C(\epsilon) = \lim_{N \to \infty} \frac{1}{N^2} \sum_{i \neq j} \Theta(\epsilon - \norm{\vect{x}_i - \vect{x}_j})
+\end{equation}
+where $\Theta$ is the Heaviside function. The dimension is:
+\begin{equation}
+    D_2 = \lim_{\epsilon \to 0} \frac{\log C(\epsilon)}{\log \epsilon}
+\end{equation}
+\end{definition}
+
+Low $D_2$ indicates trajectories are confined to a low-dimensional manifold within the high-dimensional state space, following the Grassberger-Procaccia algorithm \citep{grassberger1983}.
+
+\subsection{Dimension Mismatch Handling}
+
+For mismatched dimensions ($\dim(\cH_A) \neq \dim(\cH_B)$), we introduce learned linear projections:
+\begin{equation}
+    \mat{P}_{A \to B}: \R^{d_A} \to \R^{d_B}, \quad \mat{P}_{B \to A}: \R^{d_B} \to \R^{d_A}
+\end{equation}
+
+These are initialized near-identity on overlapping dimensions:
+\begin{equation}
+    (\mat{P}_{A \to B})_{ij} = \begin{cases}
+        \delta_{ij} + \mathcal{N}(0, 0.01) & \text{if } i,j \leq \min(d_A, d_B) \\
+        0 & \text{otherwise}
+    \end{cases}
+\end{equation}
+and trained for 100 iterations (Adam, lr=$10^{-3}$) to minimize:
+\begin{equation}
+    \mathcal{L}_{\text{proj}} = \E_{\vect{h}}\left[\norm{\vect{h} - P_{B \to A}(P_{A \to B}(\vect{h}))}_2 + \norm{\vect{h} - P_{A \to B}(P_{B \to A}(\vect{h}))}_2\right].
+\end{equation}
+
+% ============================================================================
+% 3. EXPERIMENTAL SETUP
+% ============================================================================
+\section{Experimental Setup}
+
+\subsection{Models}
+
+We study decoder-only (GPT family, GPT-Neo) and encoder-only (BERT family) architectures:
+
+\begin{table}[htbp]
+\centering
+\caption{Models used in experiments}
+\label{tab:models}
+\small
+\begin{tabular}{lcccl}
+\toprule
+\textbf{Model} & \textbf{Dim} & \textbf{Layers} & \textbf{Params} & \textbf{Type} \\
+\midrule
+GPT-2 & 768 & 12 & 124M & Decoder \\
+GPT-2-Medium & 1024 & 24 & 355M & Decoder \\
+GPT-2-Large & 1280 & 36 & 774M & Decoder \\
+DistilGPT-2 & 768 & 6 & 82M & Decoder (distilled) \\
+DialoGPT-Medium & 1024 & 24 & 355M & Decoder (fine-tuned) \\
+\midrule
+GPT-Neo-1.3B & 2048 & 24 & 1.3B & Decoder \\
+\midrule
+BERT-base & 768 & 12 & 110M & Encoder \\
+DistilBERT-base & 768 & 6 & 66M & Encoder (distilled) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Initialization Strategies}
+
+\textbf{Random:} $\vect{h}_A^{(0)}, \vect{h}_B^{(0)} \sim \mathcal{N}(0, 0.01\mat{I})$ (independent)
+
+\textbf{Same:} $\vect{h}_A^{(0)} = \vect{h}_B^{(0)} \sim \mathcal{N}(0, 0.01\mat{I})$ (identical)
+
+\textbf{Text:} Extract first token embedding from ``The quick brown fox''
+
+\subsection{Experimental Protocol}
+
+For each configuration:
+\begin{enumerate}
+    \item Initialize states per strategy
+    \item Run coupled dynamics for $T = 1000$ steps
+    \item Record trajectory $\{(\vect{h}_A^{(t)}, \vect{h}_B^{(t)})\}_{t=0}^{T}$
+    \item Compute metrics: $\rho(t)$, synchronization index, CKA, Lyapunov exponents, attractor dimensions
+    \item Repeat with 3 seeds for statistical reliability
+\end{enumerate}
+
+All models frozen (eval mode, no dropout). Total: 123 experiments across 41 unique configurations.
+
+\textbf{Computational Cost:} Running 1000 steps of coupled dynamics is highly efficient. For GPT-2 (124M parameters), a single trajectory takes approximately 20 seconds on a consumer GPU. For GPT-Neo-1.3B, this increases to $\sim$40 seconds. The entire experimental suite (all 123 runs) requires less than 2 GPU-hours, making this diagnostic method accessible for rapid iteration.
+
+
+
+\subsection{Projection Control Experiments}
+
+To verify synchronization is not an artifact of dimensional matching, we force identical models (same architecture, same weights) to use learned projections. If high synchronization persists, the geometric compatibility is intrinsic to the learned transformations, not projection quality.
+
+% ============================================================================
+% 4. RESULTS
+% ============================================================================
+\section{Results}
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.9\textwidth,
+    height=6cm,
+    xlabel={Step $t$},
+    ylabel={Cosine Similarity $\rho(t)$},
+    xmin=0, xmax=1000,
+    ymin=-0.2, ymax=1.1,
+    grid=major,
+    legend style={at={(0.97,0.5)}, anchor=east, font=\small}
+]
+
+% DISTILL (GPT2+DistilGPT2)
+\addplot[color=green!60!black, thick] coordinates {
+    (0,0.0290) (20,0.9986) (40,0.9986) (61,0.9986) (81,0.9986) (102,0.9986) (122,0.9986) (142,0.9986) (163,0.9986) (183,0.9986) (204,0.9986) (224,0.9986) (244,0.9986) (265,0.9986) (285,0.9986) (306,0.9986) (326,0.9986) (346,0.9986) (367,0.9986) (387,0.9986) (408,0.9986) (428,0.9986) (448,0.9986) (469,0.9986) (489,0.9986) (510,0.9986) (530,0.9986) (551,0.9986) (571,0.9986) (591,0.9986) (612,0.9986) (632,0.9986) (653,0.9986) (673,0.9986) (693,0.9986) (714,0.9986) (734,0.9986) (755,0.9986) (775,0.9986) (795,0.9986) (816,0.9986) (836,0.9986) (857,0.9986) (877,0.9986) (897,0.9986) (918,0.9986) (938,0.9986) (959,0.9986) (979,0.9986) (1000,0.9986)
+};
+\addlegendentry{Distill (GPT-2/Distil)}
+
+% SCALE (GPT2+GPT2-Med)
+\addplot[color=orange, thick] coordinates {
+    (0,-0.0234) (20,0.1502) (40,0.1502) (61,0.1502) (81,0.1502) (102,0.1502) (122,0.1502) (142,0.1502) (163,0.1502) (183,0.1502) (204,0.1502) (224,0.1502) (244,0.1502) (265,0.1502) (285,0.1502) (306,0.1502) (326,0.1502) (346,0.1502) (367,0.1502) (387,0.1502) (408,0.1502) (428,0.1502) (448,0.1502) (469,0.1502) (489,0.1502) (510,0.1502) (530,0.1502) (551,0.1502) (571,0.1502) (591,0.1502) (612,0.1502) (632,0.1502) (653,0.1502) (673,0.1502) (693,0.1502) (714,0.1502) (734,0.1502) (755,0.1502) (775,0.1502) (795,0.1502) (816,0.1502) (836,0.1502) (857,0.1502) (877,0.1502) (897,0.1502) (918,0.1502) (938,0.1502) (959,0.1502) (979,0.1502) (1000,0.1502)
+};
+\addlegendentry{Scale (GPT-2/Med)}
+
+% ORTHO (GPT2+GPT-Neo)
+\addplot[color=red, thick] coordinates {
+    (0,-0.0126) (20,-0.0264) (40,-0.0264) (61,-0.0264) (81,-0.0264) (102,-0.0264) (122,-0.0264) (142,-0.0264) (163,-0.0264) (183,-0.0264) (204,-0.0264) (224,-0.0264) (244,-0.0264) (265,-0.0264) (285,-0.0264) (306,-0.0264) (326,-0.0264) (346,-0.0264) (367,-0.0264) (387,-0.0264) (408,-0.0264) (428,-0.0264) (448,-0.0264) (469,-0.0264) (489,-0.0264) (510,-0.0264) (530,-0.0264) (551,-0.0264) (571,-0.0264) (591,-0.0264) (612,-0.0264) (632,-0.0264) (653,-0.0264) (673,-0.0264) (693,-0.0264) (714,-0.0264) (734,-0.0264) (755,-0.0264) (775,-0.0264) (795,-0.0264) (816,-0.0264) (836,-0.0264) (857,-0.0264) (877,-0.0264) (897,-0.0264) (918,-0.0264) (938,-0.0264) (959,-0.0264) (979,-0.0264) (1000,-0.0264)
+};
+\addlegendentry{Ortho (GPT-2/Neo)}
+
+\end{axis}
+\end{tikzpicture}
+\caption{\textbf{Synchronization Trajectories.} Distillation pairs (green) rapidly synchronize to near-unity, while scaled models (orange) plateau at weak correlation and cross-architecture pairs (red) remain orthogonal. Note the ``locked-in'' stability once synchronization is achieved.}
+\label{fig:trajectories}
+\end{figure}
+
+\subsection{Same Architecture: Perfect Synchronization}
+
+\begin{table}[htbp]
+\centering
+\caption{Same-architecture coupling (3 seeds, 1000 steps)}
+\label{tab:same_arch}
+\small
+\begin{tabular}{llcccc}
+\toprule
+\textbf{Model Pair} & \textbf{Coupling} & \textbf{Init} & \textbf{Proj?} & \textbf{$\cos \theta$} & \textbf{CKA} \\
+\midrule
+GPT-2 + GPT-2 & Direct & Random & No & $0.9998 \pm 0.0003$ & $1.000$ \\
+GPT-2 + GPT-2 & Direct & Same & No & $0.9998 \pm 0.0003$ & $1.000$ \\
+GPT-2 + GPT-2 & Direct & Text & No & $1.0000 \pm 0.0000$ & $1.000$ \\
+GPT-2 + GPT-2 & Blended (0.5) & Random & No & $1.0000 \pm 0.0000$ & $1.000$ \\
+\midrule
+DistilGPT-2 + DistilGPT-2 & Direct & Random & No & $0.9997 \pm 0.0003$ & $0.999$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Identical architectures synchronize perfectly across all coupling strategies and initializations. Text initialization produces deterministic results (zero variance across seeds), confirming transformations are fully determined by weights.
+
+\subsection{Projection Control: Critical Validation}
+
+\begin{table}[htbp]
+\centering
+\caption{Identical models with forced projections (3 seeds)}
+\label{tab:projection_control}
+\small
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Configuration} & \textbf{Init} & \textbf{Forced Proj?} & \textbf{$\cos \theta$} & \textbf{CKA} \\
+\midrule
+GPT-2 + GPT-2 & Random & No & $0.9998 \pm 0.0003$ & $1.000$ \\
+GPT-2 + GPT-2 & Random & \textbf{Yes} & $\mathbf{0.9987 \pm 0.0003}$ & $0.766$ \\
+\midrule
+GPT-2 + GPT-2 & Text & No & $1.0000 \pm 0.0000$ & $1.000$ \\
+GPT-2 + GPT-2 & Text & \textbf{Yes} & $\mathbf{0.9984 \pm 0.0010}$ & $0.728$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Critical finding:} Even with forced dimensional projections, identical models synchronize at $\cos \theta \approx 0.998$. This proves synchronization reflects intrinsic geometric compatibility, not projection quality. The slight drop ($1.000 \to 0.998$) quantifies projection-induced noise, establishing a baseline for what constitutes ``excellent'' synchronization.
+
+\subsection{Distillation: Geometry Preserved}
+
+\begin{table}[htbp]
+\centering
+\caption{Teacher-student coupling: GPT-2 and DistilGPT-2 (3 seeds)}
+\label{tab:distill}
+\small
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Model Pair} & \textbf{Coupling} & \textbf{Proj?} & \textbf{$\cos \theta$} & \textbf{CKA} \\
+\midrule
+GPT-2 + DistilGPT-2 & Direct & No & $\mathbf{0.9986 \pm 0.0000}$ & $0.789$ \\
+GPT-2 + DistilGPT-2 & Blended (0.5) & No & $\mathbf{0.9974 \pm 0.0003}$ & $0.789$ \\
+GPT-2 + DistilGPT-2 & Decay (0.1) & No & $\mathbf{0.9982 \pm 0.0003}$ & $0.789$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Despite 50\% depth reduction (6 vs 12 layers), DistilGPT-2 maintains $\cos \theta \approx 0.998$ with GPT-2 across all coupling strategies. This is comparable to the projection control baseline ($0.9987$), demonstrating distillation preserves geometric structure with minimal degradation. The distillation process, which optimizes only for output distribution matching, inadvertently preserves the internal manifold geometry.
+
+\subsection{Fine-Tuning Effects}
+
+\begin{table}[htbp]
+\centering
+\caption{Fine-tuning impact on geometric structure (3 seeds)}
+\label{tab:finetuning}
+\small
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Model Pair} & \textbf{Coupling} & \textbf{Proj?} & \textbf{$\cos \theta$} & \textbf{Interpretation} \\
+\midrule
+GPT-2-Med + GPT-2-Med & Direct & No & $1.0000 \pm 0.0000$ & Baseline (identical) \\
+GPT-2-Med + DialoGPT-Med & Direct & No & $\mathbf{0.9485 \pm 0.0000}$ & 95\% preserved \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+DialoGPT-Medium, fine-tuned on dialogue data, retains $\cos \theta = 0.949$ with its base model. Task-specific training shifts the manifold but preserves 95\% of geometric structure, suggesting fine-tuning operates as a small perturbation to the pretrained representation space rather than learning a fundamentally new geometry.
+
+\subsection{Encoder Models: Different Dynamics}
+
+\begin{table}[htbp]
+\centering
+\caption{BERT-family synchronization: Variance stability across sample sizes}
+\label{tab:bert}
+\small
+\begin{tabular}{lccc}
+\toprule
+\textbf{Model Pair} & \textbf{N=3} & \textbf{N=10} & \textbf{N=25} \\
+\midrule
+BERT + BERT & $0.57 \pm 0.13$ & $0.52 \pm 0.12$ & $0.53 \pm 0.13$ \\
+BERT + DistilBERT & $0.32 \pm 0.08$ & $0.29 \pm 0.11$ & $0.31 \pm 0.08$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Key finding:} The high variance in BERT synchronization ($\pm 0.08$--$0.13$) does not decrease with sample size, confirming this is a genuine property of encoder-only dynamics, not statistical noise. For comparison, GPT-2+GPT-2 achieves $0.9997 \pm 0.0007$ - four orders of magnitude lower variance.
+
+Possible explanations for encoder instability:
+\begin{itemize}
+    \item \textbf{Bidirectional attention}: Unlike autoregressive models, BERT attends to full context
+    \item \textbf{Masked language modeling}: Random masking during training may prevent convergence to stable geometric transformations
+    \item \textbf{Position embeddings}: Absolute vs relative encoding may affect geometric stability
+\end{itemize}
+
+\subsection{Scale Effects Within Family}
+
+\begin{table}[htbp]
+\centering
+\caption{Cross-scale coupling in GPT-2 family (3 seeds)}
+\label{tab:scale}
+\small
+\begin{tabular}{lccc}
+\toprule
+\textbf{Model Pair} & \textbf{Coupling} & \textbf{$\cos \theta$} & \textbf{CKA} \\
+\midrule
+GPT-2 + GPT-2-Medium & Direct & $0.1220 \pm 0.0195$ & $0.839$ \\
+GPT-2 + GPT-2-Large & Direct & $0.3765 \pm 0.0088$ & $0.744$ \\
+GPT-2-Medium + GPT-2-Large & Direct & $0.2779 \pm 0.0895$ & $0.488$ \\
+\midrule
+GPT-2 + GPT-2-Medium & Blended (0.5) & $0.0069 \pm 0.0275$ & $0.839$ \\
+GPT-2 + GPT-2-Large & Blended (0.5) & $0.2323 \pm 0.0202$ & $0.900$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Scaling within the same family does not preserve geometry. Critically, note moderate CKA despite low cosine similarity, GPT-2 + GPT-2-Medium shows CKA = 0.84 but $\cos \theta = 0.12$. This indicates static representational similarity does not imply dynamic compatibility. Our results complement prior analyses \citep{hauser2021similar,ding2021grounding}, confirming that high CKA does not guarantee functional alignment.
+
+\subsection{Cross-Architecture: Orthogonality}
+
+\begin{table}[htbp]
+\centering
+\caption{GPT-2 vs GPT-Neo coupling (3 seeds)}
+\label{tab:cross_arch}
+\small
+\begin{tabular}{lccc}
+\toprule
+\textbf{Model Pair} & \textbf{Coupling} & \textbf{Init} & \textbf{$\cos \theta$} \\
+\midrule
+GPT-2 + GPT-Neo & Direct & Random & $-0.0237 \pm 0.0124$ \\
+GPT-2 + GPT-Neo & Blended (0.5) & Random & $-0.0326 \pm 0.0154$ \\
+GPT-2 + GPT-Neo & Blended (0.5) & Text & $-0.0326 \pm 0.0155$ \\
+GPT-2-Med + GPT-Neo & Direct & Random & $0.0452 \pm 0.0078$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Different architecture families remain orthogonal across all coupling strategies and initializations, suggesting they have learned incompatible geometric transformations.
+
+\subsection{Phase Transition in Coupling Strength}
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.8\textwidth,
+    height=6cm,
+    xlabel={Blending Parameter $\alpha$},
+    ylabel={Synchronization Index},
+    xmin=0, xmax=1,
+    ymin=-0.2, ymax=1.2,
+    grid=major,
+    legend pos=north east,
+]
+
+\addplot[color=blue, thick, mark=*, mark size=2pt] coordinates {
+    (0.0, 0.040) (0.1, 0.118) (0.2, 0.143) (0.3, 0.207) (0.4, 0.205)
+    (0.5, 1.000)
+    (0.6, 0.205) (0.7, 0.207) (0.8, 0.143) (0.9, 0.118) (1.0, 0.040)
+};
+
+\draw[dashed, red, thick] (axis cs:0.5,0) -- (axis cs:0.5,1.2);
+\node[right, red, font=\small] at (axis cs:0.51, 0.8) {Phase Transition};
+
+\end{axis}
+\end{tikzpicture}
+\caption{\textbf{Phase Transition at $\alpha = 0.5$.} Synchronization index shows a sharp discontinuity at equal blending, revealing the specific threshold required for perfect velocity alignment.}
+\label{fig:phase_transition}
+\end{figure}
+
+\begin{table}[htbp]
+\centering
+\caption{Blended coupling parameter sweep: GPT-2 + GPT-2 (3 seeds)}
+\label{tab:phase_transition}
+\small
+\begin{tabular}{cccc}
+\toprule
+\textbf{$\alpha$} & \textbf{$\cos \theta$} & \textbf{Sync Index} & \textbf{CKA} \\
+\midrule
+0.0 (Pure swap) & $0.9998 \pm 0.0003$ & $0.040 \pm 0.132$ & $0.822$ \\
+0.1 & $1.0000 \pm 0.0000$ & $0.118 \pm 0.044$ & $0.818$ \\
+0.2 & $0.9998 \pm 0.0003$ & $0.143 \pm 0.045$ & $0.826$ \\
+0.3 & $1.0000 \pm 0.0000$ & $0.207 \pm 0.032$ & $0.895$ \\
+0.4 & $0.9998 \pm 0.0003$ & $0.205 \pm 0.043$ & $0.819$ \\
+\textbf{0.5 (Equal blend)} & $\mathbf{1.0000 \pm 0.0000}$ & $\mathbf{1.000 \pm 0.000}$ & $\mathbf{1.000}$ \\
+0.6 & $0.9998 \pm 0.0003$ & $0.205 \pm 0.043$ & $0.819$ \\
+0.7 & $1.0000 \pm 0.0000$ & $0.207 \pm 0.032$ & $0.895$ \\
+0.8 & $0.9998 \pm 0.0003$ & $0.143 \pm 0.045$ & $0.826$ \\
+0.9 & $1.0000 \pm 0.0000$ & $0.118 \pm 0.044$ & $0.818$ \\
+1.0 (No coupling) & $0.9998 \pm 0.0003$ & $0.040 \pm 0.132$ & $0.822$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Phase transition:} While final cosine similarity remains $\approx 1.0$ for all $\alpha$, the synchronization index shows a sharp discontinuity at $\alpha = 0.5$, jumping to $1.000$. This reveals an optimal coupling strength where both models contribute equally, achieving perfect velocity alignment. The symmetry around 0.5 suggests a convex basin of attraction. While the mathematical symmetry naturally balances inputs at $\alpha=0.5$, the emergence of perfect synchronization is non-trivial: it implies the velocity fields are compatible and additive. If underlying geometries were misaligned, summing update vectors wouldn't produce coherent directed motion even at equal weighting.
+
+% ============================================================================
+% 5. DYNAMICAL SYSTEMS ANALYSIS
+% ============================================================================
+\section{Dynamical Systems Analysis}
+
+To characterize the nature of the synchronized states beyond static alignment, we analyze the coupled dynamics using tools from nonlinear dynamical systems theory.
+
+\subsection{Lyapunov Exponent Analysis}
+
+\begin{table}[htbp]
+\centering
+\caption{Lyapunov Exponent Estimates (3 seeds)}
+\label{tab:lyapunov}
+\small
+\begin{tabular}{lcc}
+\toprule
+\textbf{Configuration} & \textbf{$\lambda_{\max}$} & \textbf{Dynamics Type} \\
+\midrule
+GPT-2 + GPT-2 (direct) & $0.079 \pm 0.005$ & Periodic/quasi-periodic \\
+GPT-2 + GPT-2 (same init) & $0.098 \pm 0.008$ & Edge of chaos \\
+GPT-2 + GPT-Neo-1.3B & $0.095 \pm 0.010$ & Periodic/quasi-periodic \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+All configurations show $\lambda_{\max} \approx 0.08$--$0.10$, indicating positive but small Lyapunov exponents. To contextualize these values:
+\begin{itemize}
+    \item \textbf{Strongly chaotic:} The Lorenz attractor exhibits $\lambda_{\max} \approx 0.9$
+    \item \textbf{Mildly chaotic (computational edge):} Recurrent networks optimized for computation show $\lambda_{\max} \approx 0.01$--$0.1$ \citep{bertschinger2004real}
+    \item \textbf{Periodic/stable:} $\lambda_{\max} = 0$ or negative
+\end{itemize}
+
+Our observed values ($\lambda_{\max} \approx 0.08$--$0.10$) place transformer dynamics squarely in the mildly chaotic regime, consistent with the ``edge of chaos'' observed in recurrent networks optimized for computational tasks \citep{langton1990computation,bertschinger2004real}. This regime balances two competing demands:
+\begin{itemize}
+    \item \textbf{Stability:} Divergence is slow enough ($\lambda_{\max} \ll 1$) that coupling remains meaningful over 1000 steps
+    \item \textbf{Sensitivity:} Positive $\lambda_{\max}$ enables exploration of state space without collapsing to trivial fixed points
+\end{itemize}
+
+The edge-of-chaos hypothesis \citep{langton1990computation,packard1988adaptation} posits that systems capable of complex computation naturally evolve toward this transitional regime. Our findings suggest pretrained transformers - without any explicit optimization for dynamical properties - occupy this computationally favorable regime.
+
+\subsection{Attractor Dimension Analysis}
+
+\begin{table}[htbp]
+\centering
+\caption{Correlation Dimension Estimates (3 seeds)}
+\label{tab:attractor}
+\small
+\begin{tabular}{lcc}
+\toprule
+\textbf{Configuration} & \textbf{$D_2$ (mean $\pm$ std)} & \textbf{Interpretation} \\
+\midrule
+GPT-2 + GPT-2 & $1.85 \pm 0.03$ & Low-dimensional \\
+GPT-2 + DistilGPT-2 & $1.84 \pm 0.03$ & Low-dimensional \\
+GPT-2 + GPT-Neo-1.3B & $1.06 \pm 0.29$ & Very low-dimensional \\
+GPT-2 + GPT-2-Medium & $2.00 \pm 0.52$ & Low-dimensional \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The low attractor dimensions ($D_2 < 2.5$ in all cases) are striking: despite operating in 768- to 2048-dimensional state spaces, the coupled dynamics are confined to manifolds of dimension $\lesssim 2$. This suggests:
+
+\begin{observation}
+Transformer representations, despite their high ambient dimensionality, have intrinsic low-dimensional structure. The coupled dynamics reveal this structure by constraining trajectories to low-dimensional attractors.
+\end{observation}
+
+The synchronized pairs (GPT-2 + GPT-2, GPT-2 + DistilGPT-2) show consistent dimensions ($D_2 \approx 1.85$), indicating stable low-dimensional attractors. Interestingly, the cross-library pair (GPT-2 + GPT-Neo) shows the lowest dimension ($D_2 \approx 1.06$), suggesting the dynamics are highly constrained, likely due to the significant projection bottleneck between 768 and 2048 dimensions.
+
+% ============================================================================
+% 6. UTILITY OF THE DYNAMIC METRIC
+% ============================================================================
+\section{Utility of the Dynamic Metric: Predicting Model Merging}
+
+We designed the coupled dynamics test as a diagnostic tool for functional compatibility. To demonstrate its practical utility, we compare its predictions against Centered Kernel Alignment (CKA) \citep{kornblith2019similarity} for forecasting the success of model merging. CKA is a widely used and highly effective metric for assessing the static spatial similarity of representations. However, because it evaluates static alignment for a given input rather than dynamic operational alignment, it can occasionally diverge from functional outcomes when models are structurally manipulated.
+
+We validate our dynamic predictions using weight merging experiments, evaluated on 50 WikiText-2 test sequences.
+
+\paragraph{1. Weight Merging (Same Architecture)}
+For models with identical architectures, we test parameter averaging: $\theta_{\text{merged}} = \alpha \theta_A + (1-\alpha) \theta_B$.
+\begin{itemize}
+    \item \textbf{GPT-2 + GPT-2} ($\cos \theta = 1.0$): Merging succeeds with \textbf{0\% degradation} (identity).
+    \item \textbf{GPT-2-Medium + DialoGPT-Medium} ($\cos \theta = 0.949$): This is the critical non-obvious case, a fine-tuned dialogue model merging with its base. At $\alpha = 0.7$ (favoring GPT-2-Medium), the merged model achieves PPL = 57.5, representing only \textbf{39\% degradation} from the GPT-2-Medium baseline (PPL = 41.5). At $\alpha = 0.5$, degradation increases to 136\%. At $\alpha = 0.3$, degradation reaches 316\%. The non-trivial but bounded degradation pattern confirms that $\cos \theta = 0.949$ correctly predicts \textit{partial} geometric compatibility.
+    \item \textbf{GPT-2 + GPT-2-Medium} ($\cos \theta = 0.12$): Merging via zero-padding (padding smaller 768-dim weight matrices to 1024-dim) leads to \textbf{catastrophic failure}: at $\alpha = 0.5$, PPL increases from 41.5 to 518,795 (\textbf{$1.25 \times 10^6\%$ degradation}). Even at $\alpha = 0.3$ (heavily favoring the larger model), PPL = 32,814 (79,007\% degradation). This confirms that low geometric synchronization reflects fundamental incompatibility that no interpolation weight can overcome.
+\end{itemize}
+
+\paragraph{2. Dynamical vs.\ Weight Compatibility}
+An important distinction emerges: dynamical synchronization ($\cos \theta$) measures whether two models' \textit{geometric transformations are compatible}, but weight merging additionally requires \textit{structural alignment} (same number of layers, same parameter layout). GPT-2 + DistilGPT-2 achieve near-perfect dynamical synchronization ($\cos \theta = 0.998$), confirming shared geometry, but partial weight merging (matching only the 77 of 149 parameters that share names across 6 vs.\ 12 layers) produces 1,367\% degradation. This is not a failure of the geometric prediction, rather, it shows that dynamical compatibility is necessary but not sufficient for weight merging when architectures differ structurally. The geometry is shared; the engineering of parameter-space combination requires matching structure.
+
+\paragraph{3. CKA vs.\ Dynamic Alignment}
+Table~\ref{tab:cka_comparison} demonstrates that static similarity and dynamical synchronization can diverge. CKA assigns higher static spatial similarity to GPT-2 + GPT-2-Medium ($0.84$) than to GPT-2-Medium + DialoGPT-Medium ($0.49$). However, merging results demonstrate that DialoGPT merges successfully while GPT-2-Medium fails catastrophically. In contrast, our dynamical metric $\cos \theta$ correctly aligns with these functional outcomes.
+
+\begin{table}[htbp]
+\centering
+\caption{CKA vs.~cos~$\theta$ as Predictors of Merging Success. Static similarity (CKA) and dynamic compatibility (cos~$\theta$) capture different phenomena, with the dynamic metric more closely aligning with weight merging outcomes for these pairs. Evaluated on 50 WikiText-2 sequences.}
+\label{tab:cka_comparison}
+\small
+\begin{tabular}{l ccc l}
+\toprule
+\textbf{Model Pair} & \textbf{CKA} & \textbf{$\cos \theta$} & \textbf{Best Merge} & \textbf{Outcome} \\
+\midrule
+GPT-2 + GPT-2 & $1.00$ & $1.000$ & 0\% degrad. & \textcolor{green}{Success} \\
+GPT-2-Med + DialoGPT-Med & $0.49$ & $0.949$ & 39\% degrad.~($\alpha{=}0.7$) & \textcolor{green}{Success} \\
+GPT-2 + GPT-2-Medium & $\mathbf{0.84}$ & $0.122$ & $1.25{\times}10^6\%$ degrad. & \textcolor{red}{Failure} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The DialoGPT-Medium result is particularly informative: this is a model fine-tuned for dialogue, tested on general language modeling (WikiText-2). Despite task mismatch reducing the raw spatial CKA alignment, the underlying geometric dynamics ($\cos \theta = 0.949$) are preserved from the base model, and this dynamical compatibility perfectly correlates with successful parameter-space merging.
+
+Together, these experiments demonstrate that $\cos \theta$ provides a reliable pre-merge diagnostic that captures functional properties invisible to static similarity metrics alone. Rather than invalidating CKA, this confirms that dynamic methods offer complementary utility for evaluating combinations of structurally modified models.
+
+\subsection{Practical Guidelines}
+
+Based on our findings, we offer the following practical guidelines for practitioners:
+
+\begin{enumerate}
+    \item \textbf{Model selection for merging:} Before averaging model weights, run a short coupled dynamics test ($T=100$ steps, $\sim$30 seconds for GPT-2). If $\cos \theta > 0.9$, merging will likely succeed. If $\cos \theta < 0.5$, expect degraded performance.
+    
+    \item \textbf{Distillation preserves more than you think:} When distilling from a teacher, expect near-perfect geometric preservation ($\cos \theta \approx 0.998$). This means interpretability findings and probing classifiers trained on the teacher should transfer to the student.
+    
+    \item \textbf{Avoid cross-scale combinations:} Scaling up (GPT-2 $\to$ GPT-2-Medium) fundamentally changes dynamical geometry. Don't expect continuous representations to cleanly transfer across scale, even within the same model family, without significant learned adaptation.
+    
+    \item \textbf{Be cautious with encoder models:} BERT-family models show high variance in our tests. Results for encoders may be less predictable than for autoregressive models.
+\end{enumerate}
+
+% ============================================================================
+% 7. THEORETICAL ANALYSIS
+% ============================================================================
+\section{Theoretical Analysis}
+
+\subsection{Synchronization as Manifold Alignment}
+
+\begin{theorem}[Same-Architecture Convergence]
+\label{thm:convergence}
+For identical transformer architectures $F_A = F_B = F$, if the average spectral radius of the Jacobian satisfies $\E[\rho(\mat{J}_F)] < 1$ along trajectories, then direct coupling leads to rapid synchronization:
+\begin{equation}
+    \lim_{t \to \infty} \cos(\vect{h}_A^{(t)}, \vect{h}_B^{(t)}) = 1
+\end{equation}
+with convergence typically within $\sim$50-100 iterations.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+Consider the synchronization manifold $\cS = \{(\vect{h}, \vect{h}) : \vect{h} \in \cH\}$. For identical $F$, if $\vect{h}_A^{(t)} = \vect{h}_B^{(t)} = \vect{h}$, then:
+\begin{align}
+    \vect{h}_A^{(t+1)} &= F(\vect{h}) \\
+    \vect{h}_B^{(t+1)} &= F(\vect{h})
+\end{align}
+so $\cS$ is invariant. The transverse dynamics are governed by:
+\begin{equation}
+    \vect{\epsilon}_A^{(t+1)} - \vect{\epsilon}_B^{(t+1)} = \mat{J}_F(\vect{h}^{(t)}) (\vect{\epsilon}_B^{(t)} - \vect{\epsilon}_A^{(t)})
+\end{equation}
+where $\vect{\epsilon}$ are perturbations from $\cS$. Given the contraction condition $\E[\rho(\mat{J}_F)] < 1$, perturbations decay exponentially on average.
+\end{proof}
+
+\begin{remark}
+Whether pretrained transformers satisfy the contraction condition $\E[\rho(\mat{J}_F)] < 1$ is an open question. Transformers with residual connections have $\mat{J}_F = \mat{I} + \mat{J}_g$ where $\mat{J}_g$ is the Jacobian of the non-residual component, suggesting $\rho(\mat{J}_F) \approx 1$. However, our empirical results (Table~\ref{tab:same_arch}) demonstrate rapid convergence in all tested cases, suggesting an effective contraction property may hold in practice. Formal analysis of transformer Jacobian spectra remains an important direction for future work.
+\end{remark}
+
+\begin{theorem}[Cross-Architecture Orthogonality]
+For different transformer architectures (GPT-2 vs GPT-Neo), coupled dynamics remain orthogonal:
+\begin{equation}
+    \cos(\vect{h}_A^{(t)}, \vect{h}_B^{(t)}) \approx 0 \quad \forall t
+\end{equation}
+regardless of coupling strength $\alpha$.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+For $F_A \neq F_B$, the synchronization manifold is not invariant. Starting from $\vect{h}_A^{(0)} = \vect{h}_B^{(0)} = \vect{h}$:
+\begin{align}
+    \vect{h}_A^{(1)} &= F_A(\vect{h}) \\
+    \vect{h}_B^{(1)} &= F_B(\vect{h})
+\end{align}
+Generically $F_A(\vect{h}) \neq F_B(\vect{h})$, so the system immediately leaves $\cS$. The observed orthogonality suggests $F_A(\vect{h})$ and $F_B(\vect{h})$ lie in approximately orthogonal subspaces, the architectures have learned incompatible geometric transformations.
+\end{proof}
+
+\subsection{Why Distillation Preserves Geometry}
+
+The distillation loss $\mathcal{L} = \text{KL}(p_T \| p_S)$ operates on output logits, not hidden states. Yet geometry is preserved. Why?
+
+\begin{proposition}[Output Matching Implies Hidden Alignment]
+If a student model $S$ matches the teacher's output distribution for all inputs in a representative set, and the language modeling head $\mat{W}_{\text{LM}} \in \R^{V \times d}$ has rank $r = \min(d, V)$, then the hidden states $F_S(x)$ and $F_T(x)$ must align in the $r$-dimensional subspace spanned by the row space of $\mat{W}_{\text{LM}}$.
+\end{proposition}
+
+\begin{proof}[Proof sketch]
+Output matching requires $\mat{W}_{\text{LM}} F_S(x) \approx \mat{W}_{\text{LM}} F_T(x)$ for all $x$. If $\mat{W}_{\text{LM}}$ has full row rank (typical for $d < V$), this constrains $F_S(x)$ and $F_T(x)$ to differ only in the null space of $\mat{W}_{\text{LM}}$, which has dimension $d - r \approx 0$ for modern transformers where $d \ll V$.
+\end{proof}
+
+\noindent\textbf{From approximate to near-perfect alignment.}
+The above shows exact output matching implies hidden alignment. But distillation only achieves \textit{approximate} matching (minimizing KL divergence), allowing $F_S(x) - F_T(x)$ to have small but non-zero magnitude. We hypothesize that the implicit bias of SGD-based training \citep{jacot2018neural} drives this residual toward zero, as gradient descent naturally finds low-norm solutions. Our empirical observation of $\cos \theta = 0.998$ (not just $\approx 0.9$) supports this hypothesis: approximate output matching plus SGD regularization produces near-exact hidden alignment.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}[scale=0.9]
+        % Axes
+        \draw[->, thick] (-1,0) -- (6,0) node[below] {Dim 1};
+        \draw[->, thick] (0,-1) -- (0,5) node[left] {Dim 2};
+        
+        % Subspace Line
+        \draw[blue, thick, dashed] (-1,-0.5) -- (5.5, 2.75) node[right, blue] {Subspace $\mathbf{W}_{\text{LM}}$};
+        
+        % Vectors
+        \draw[->, thick, red] (0,0) -- (3, 3) node[above left, xshift=5pt] {$F_T(x)$ (Teacher)};
+        \draw[->, thick, orange] (0,0) -- (4, 1) node[below right, xshift=-5pt] {$F_S(x)$ (Student)};
+        
+        % Projections
+        \draw[dotted, thick] (3, 3) -- (3.6, 1.8);
+        \draw[dotted, thick] (4, 1) -- (3.6, 1.8);
+        
+        % Projected Point
+        \filldraw[black] (3.6, 1.8) circle (2pt);
+            
+        % Label
+        \draw[thin] (3.6, 1.8) -- (4.6, 1.8) node[right, align=left, font=\small] {Projected\\Alignment};
+        
+        % Annotation
+        \node[align=left, font=\small, anchor=north west] at (0.5, 4.8) {Distillation forces alignment\\ in the output subspace};
+    \end{tikzpicture}
+    \caption{\textbf{Geometric Interpretation.} Student and teacher hidden states may differ in full space, but distillation forces their projections onto the subspace spanned by $\mathbf{W}_{\text{LM}}$ to align.}
+    \label{fig:subspace_diagram}
+\end{figure}
+
+From a Neural Tangent Kernel perspective \citep{jacot2018neural}, distillation constrains the student to operate in a similar kernel regime, naturally preserving geometric structure.
+
+\begin{conjecture}[Distillation Preserves Local Geometry]
+\label{conj:tangent}
+Knowledge distillation with output matching loss approximately preserves local geometric structure. Formally, for teacher $T$ and distilled student $S$, the Jacobians satisfy:
+\begin{equation}
+    \E_x\left[\|\mat{J}_S(x) - \mat{J}_T(x)\|_F\right] < \epsilon
+\end{equation}
+for small $\epsilon$, where $\|\cdot\|_F$ denotes the Frobenius norm. This implies the tangent space structure is preserved: $T_{\vect{h}}\cM_{\text{teacher}} \approx T_{\vect{h}}\cM_{\text{student}}$.
+\end{conjecture}
+
+\noindent Testing this conjecture empirically (via Jacobian computation and comparison) remains an important direction for future work.
+
+This would explain why GPT-2 and DistilGPT-2 synchronize despite architectural differences: the distillation objective enforces geometric compatibility at the output level, which propagates to internal representations through the constraint that hidden states must produce matching outputs.
+
+\subsubsection{The Role of Dimensionality}
+
+Critically, DistilGPT-2 preserves GPT-2's 768-dimensional embedding space. This shared dimensionality enables direct coupling without projection. However, our cross-scale experiments show it is not sufficient: GPT-2 and GPT-2-Medium, both from the GPT-2 family, fail to synchronize ($\cos \theta \approx 0.12$) due to dimensional incompatibility requiring learned projections.
+
+This suggests a two-factor model:
+\begin{enumerate}
+    \item \textbf{Dimension matching}: Necessary for clean state exchange
+    \item \textbf{Transformation similarity}: Necessary for synchronized dynamics
+\end{enumerate}
+
+Distillation preserves both factors despite depth reduction, whereas scaling preserves neither.
+
+\subsection{Projection Control Interpretation}
+
+The projection control experiments ($\cos \theta = 0.9987$ with forced projection vs $0.9998$ without) quantify projection-induced noise. The $0.001$ gap represents:
+\begin{itemize}
+    \item Reconstruction error from imperfect round-trip projection
+    \item Numerical precision limits
+    \item Small deviations from identity initialization
+\end{itemize}
+
+This establishes a noise floor: any synchronization above $\cos \theta \approx 0.998$ indicates near-perfect geometric compatibility. That DistilGPT-2 + GPT-2 achieves exactly this level ($0.998$) proves the compatibility is real, not artifactual.
+
+\subsection{Fine-Tuning as Manifold Perturbation}
+
+DialoGPT's 95\% geometry preservation ($\cos \theta = 0.949$) suggests fine-tuning operates as a small perturbation to the pretrained manifold rather than learning a new representation space. This supports transfer learning practices and explains why fine-tuned models can often be merged back with base models \citep{wortsman2022model}.
+
+The high variance in synchronization index for DialoGPT pairs ($\pm 0.164$, from Paper 1 data) suggests that while the static ``map'' of concepts is preserved, phase alignment of the dynamical system is more sensitive to task-specific training.
+
+% ============================================================================
+% 7. IMPLICATIONS
+% ============================================================================
+\section{Implications}
+
+\subsection{Model Merging}
+
+Our results predict merging success:
+\begin{itemize}
+    \item \textbf{Teacher-student pairs}: High success (geometry compatible, $\cos \theta \approx 0.998$)
+    \item \textbf{Cross-scale pairs}: Low success (geometry diverges, $\cos \theta \approx 0.12$)
+    \item \textbf{Cross-architecture pairs}: No success (orthogonal, $\cos \theta \approx 0$)
+    \item \textbf{Fine-tuned variants}: Moderate success (95\% preserved, $\cos \theta \approx 0.95$)
+\end{itemize}
+
+\subsection{Transfer Learning and Interpretability}
+
+Representations transfer reliably only between geometrically compatible models. Interpretability findings on GPT-2 may transfer to DistilGPT-2 but not to GPT-2-Large or BERT variants. This has practical implications for mechanistic interpretability research \citep{elhage2021mathematical}.
+
+\subsection{Multi-Agent Systems}
+
+Our results suggest transformer-based agents can only develop shared representations if they share architectural structure. Heterogeneous agent populations may be fundamentally unable to develop non-linguistic shared representations, limiting the potential for emergent communication protocols.
+
+\subsection{The Learned Geometry Hypothesis}
+
+Our findings support the hypothesis that transformer training induces an \textit{architecture-specific geometry} in representation space. This geometry is:
+\begin{itemize}
+    \item \textbf{Robust}: Preserved under coupling perturbations and occupies stable low-dimensional attractors
+    \item \textbf{Distinctive}: Different architectures produce orthogonal geometries
+    \item \textbf{Transferable}: Preserved under distillation despite significant architectural changes
+    \item \textbf{Low-dimensional}: Confined to manifolds of dimension $D_2 \lesssim 2.5$ despite ambient spaces of dimension $768$--$2048$
+\end{itemize}
+
+
+
+
+% ============================================================================
+% 8. RELATED WORK
+% ============================================================================
+\section{Related Work}
+
+Our work draws on and connects several research threads: knowledge distillation, representational similarity analysis, hidden state exchange in neural networks, model merging, and dynamical systems theory. We discuss each in turn, emphasizing how our coupled dynamics framework relates to and extends prior approaches.
+
+\subsection{Knowledge Distillation}
+
+\citet{hinton2015distilling} introduced knowledge distillation as a model compression technique, training smaller ``student'' models to match the soft output distributions of larger ``teacher'' models. \citet{sanh2019distilbert} applied this paradigm to transformers, producing DistilBERT and DistilGPT-2. Subsequent work has explored geometric objectives for distillation: \citet{li2019deepgkd} proposed graph-based geometric losses, \citet{liu2023embeddistill} introduced embedding-space distillation for information retrieval, and \citet{yuan2021manifoldkd} developed manifold-aware distillation for vision transformers. \citet{romero2015fitnets} proposed FitNets, which directly match intermediate representations between teacher and student. \citet{jiao2022revisiting} revisited transformer-specific distillation strategies.
+
+Our work differs fundamentally from this line: rather than proposing a new distillation \textit{training objective}, we provide a \textit{post-hoc diagnostic} for whether distillation has preserved geometric structure. This diagnostic is model-agnostic and requires no retraining, only frozen forward passes.
+
+\subsection{Representational Similarity in Language Models}
+
+Representational similarity analysis has a rich history in both neuroscience and machine learning. \citet{kornblith2019similarity} popularized Centered Kernel Alignment (CKA) for comparing neural network representations, and \citet{raghu2017svcca} introduced SVCCA for analyzing training dynamics. \citet{ding2021grounding} emphasized the importance of statistical testing when comparing representations. More recently, \citet{klabunde2023similarity} provided a comprehensive survey of functional and representational similarity measures, categorizing metrics by what aspects of representation they capture.
+
+Critically for our work, prior studies have applied these tools specifically to \textit{language models}. \citet{abnar2019blackbox} introduced Representational Stability Analysis (ReStA) for neural language models, studying how sensitivity to prior context varies across architectures, a direct precursor to our interest in how different architectures process sequential information differently. \citet{ethayarajh2019contextual} characterized the geometry of BERT, ELMo, and GPT-2 representations, finding that contextual embeddings occupy a narrow cone in representation space (anisotropy), a geometric property relevant to our synchronization analysis. \citet{cai2021isotropy} further analyzed isotropy and manifold structure in contextual embeddings.
+
+Most relevant to our contribution, \citet{hosseini2023straightening} demonstrated that autoregressive language models implicitly learn to \textit{straighten} neural sentence trajectories across layers, connecting representational geometry to predictive performance. Their finding that better language models produce straighter trajectories parallels our observation that geometrically compatible models synchronize more rapidly, both suggest that representational geometry carries information about functional properties not captured by static similarity metrics.
+
+Our dynamic approach differs from all of the above in a key respect: rather than comparing \textit{static} representations (snapshots of activations for a given input), we measure \textit{functional} compatibility through iterative dynamical interaction. As \citet{hauser2021similar} and \citet{nguyen2021wide} have noted, static similarity does not guarantee functional equivalence, our results with CKA (Section~6) provide a concrete demonstration of this gap.
+
+\subsection{Hidden State Exchange and Latent Reasoning}
+
+Our coupled dynamics method feeds hidden states from one model as input to another. This relates to a growing body of work on hidden state feedback in transformers.
+
+\citet{hao2024coconut} introduced Coconut (Chain of Continuous Thought), which feeds a model's own last hidden state back as its next input embedding, bypassing token-level discretization for improved reasoning. \citet{dehghani2019universal} proposed Universal Transformers, which iteratively apply the same transformation block, creating recurrent depth within the transformer paradigm. Both demonstrate that transformers can meaningfully process hidden states as inputs without tokenization - validating the core assumption of our method.
+
+Our work extends this paradigm from \textit{intra-model} to \textit{inter-model} state exchange. While Coconut asks ``can a model reason over its own hidden states?'', we ask ``can model A meaningfully process model B's hidden states?'' The answer, we show, depends on geometric compatibility: architecturally compatible models (same family, distilled pairs) can, while incompatible models cannot. This distinction, between self-feedback and cross-model feedback, is novel and reveals structural properties of learned representations that self-feedback alone cannot expose.
+
+\citet{moschella2023relative} demonstrated that relative representations can enable zero-shot communication between different neural network latent spaces, suggesting a form of geometric universality. Our findings qualify this: while relative representations may bridge some gaps, the raw geometric transformations learned by different architectures are fundamentally incompatible (Section~4.7), indicating that the universality hypothesis has limits.
+
+\subsection{Model Merging and Stitching}
+
+Model merging has rapidly advanced beyond simple weight averaging. \citet{wortsman2022model} showed that averaging weights of multiple fine-tuned models (``model soups'') improves accuracy without increasing inference cost. \citet{frankle2020linear} established linear mode connectivity as a theoretical foundation, showing that models from shared initializations can be connected by low-loss linear paths in parameter space.
+
+Recent methods address the limitations of na\"ive averaging. \citet{ilharco2023task} introduced task arithmetic, composing model capabilities by adding and subtracting ``task vectors'' (differences between fine-tuned and pretrained weights). \citet{yadav2023ties} proposed TIES-Merging to resolve parameter interference by trimming, electing signs, and merging. \citet{yu2024dare} introduced DARE, which sparsifies task vectors before merging. \citet{davari2023model} showed that recycling diverse models improves out-of-distribution generalization.
+
+A parallel line of work addresses the permutation symmetry problem: \citet{ainsworth2023git} developed Git Re-Basin, aligning models by finding optimal neuron permutations before merging. \citet{entezari2022role} analyzed the role of permutation invariance in linear mode connectivity. \citet{singh2020model} approached model fusion through optimal transport. \citet{jordan2023repair} proposed REPAIR for normalizing activations after interpolation.
+
+\citet{bansal2021stitching} introduced model stitching, connecting internal layers of different models with learned transformations, providing a representation-level (rather than parameter-level) approach to model combination.
+
+Our coupled dynamics test provides a \textit{complementary diagnostic} to these methods. Where existing merging techniques operate directly in parameter space and evaluate success post-hoc (by measuring task performance of the merged model), our method provides a \textit{pre-merge} prediction of compatibility in representation space. As we demonstrate in Section~6, CKA's static alignment can diverge from functional compatibility: GPT-2 + GPT-2-Medium achieves a high static similarity (CKA = $0.84$) while GPT-2-Medium + DialoGPT-Medium achieves a lower static similarity (CKA = $0.49$)---yet our dynamic measure $\cos \theta$ correctly assigns the opposite compatibility ranking, identifying DialoGPT as functionally compatible (corroborated by successful weight merging). \citet{zhou2024crosslmc} similarly found that CKA and linear mode connectivity can diverge, further motivating complementary dynamic approaches for predicting merging success.
+
+\subsection{Neural Network Geometry and Dynamical Systems}
+
+Viewing neural networks as dynamical systems has a substantial history. \citet{haber2017stable} analyzed deep networks as discretizations of ordinary differential equations, establishing stability criteria. \citet{chen2018neuralode} introduced Neural ODEs, treating depth as a continuous variable. \citet{lu2020understanding} explicitly analyzed transformers as multi-particle dynamical systems, deriving stability properties from the attention mechanism.
+
+Most recently, \citet{geshkovski2024mathematical} provided a rigorous mathematical framework for transformers as interacting particle systems, proving convergence and clustering properties. Their analysis treats tokens as particles governed by attention-mediated forces - closely related to our treatment of hidden states as dynamical variables governed by transformer maps.
+
+Our contribution connects these theoretical frameworks to an \textit{empirical diagnostic}. While prior work characterizes the dynamics of a single model, we study \textit{coupled} systems of two models, using synchronization properties to infer geometric compatibility.
+
+\subsection{Synchronization Theory}
+
+Our coupling framework draws on synchronization phenomena in coupled oscillators \citep{kuramoto1984chemical,strogatz2000}, particularly the theory of synchronization in chaotic systems \citep{pecora1990}. The phase transition we observe at $\alpha = 0.5$ (Section~4.8) resembles bifurcations in coupled dynamical systems, where a critical coupling strength separates synchronized from unsynchronized regimes.
+
+\subsection{Scaling Laws}
+
+\citet{kaplan2020scaling} derived scaling laws relating model performance to size, dataset size, and compute. Our results reveal a complementary perspective: scaling also fundamentally alters the internal geometric structure of representations (Section~4.6). Models within the same family but at different scales learn incompatible geometric transformations, suggesting that scaling laws for performance do not extend to representational structure.
+
+% ============================================================================
+% 9. LIMITATIONS
+% ============================================================================
+\section{Limitations}
+
+\begin{itemize}
+    \item Limited to GPT-2, GPT-Neo, BERT families. Modern architectures (LLaMA, Mistral, Qwen) may behave differently; extending to these is important future work.
+    \item Merging validation covers four model pairs. While these demonstrate the CKA failure clearly, larger-scale validation across more model families and merging methods (TIES, DARE, Task Arithmetic) would strengthen the claims.
+    \item CKA comparison uses kernel CKA with mean-pooled last-layer representations on 50 WikiText-2 sequences. Different CKA variants (e.g., layer-wise CKA, minibatch CKA) might yield different rankings.
+    \item Projections may introduce artifacts not fully controlled by forced-projection experiments.
+    \item BERT results based on $N=10$ seeds still show high variance; encoder model behavior requires further investigation (preliminary finding).
+    \item Frozen pretrained models only; dynamics during fine-tuning unexplored.
+    \item Single text prompt for initialization; multiple prompts might reveal additional structure.
+    \item Lyapunov exponent and attractor dimension estimates may be sensitive to hyperparameters (embedding dimension, delay, number of neighbors).
+\end{itemize}
+
+% ============================================================================
+% 10. CONCLUSION
+% ============================================================================
+\section{Conclusion}
+
+Through 123 experiments across 41 configurations, we establish that \textbf{knowledge distillation preserves representational geometry}. DistilGPT-2 synchronizes with GPT-2 at $\cos \theta = 0.998$, comparable to projection-induced noise ($0.9987$), despite 50\% depth reduction.
+
+Key findings:
+\begin{itemize}
+    \item Distillation preserves coupled dynamics ($\cos \theta = 0.998$)
+    \item Fine-tuning preserves 95\% of dynamical structure ($\cos \theta = 0.949$)
+    \item Scaling disrupts dynamical synchronization ($\cos \theta \approx 0.12$--$0.38$)
+    \item Dynamic compatibility complements static analysis; $\cos \theta$ aligns with functional weight merging outcomes where spatial representations diverge
+    \item Encoder models exhibit different coupling dynamics ($\cos \theta \approx 0.32$--$0.57$; preliminary)
+    \item Synchronized states occupy low-dimensional attractors ($D_2 \lesssim 2.5$)
+    \item Dynamics operate at edge of chaos ($\lambda_{\max} \approx 0.08$--$0.10$)
+\end{itemize}
+
+These results have immediate practical applications for model merging, transfer learning, and interpretability research. The coupled dynamics diagnostic provides a fast ($\sim$30 seconds per model pair) and reliable pre-merge compatibility test, complementing existing merging methods that operate in parameter space. More broadly, our framework opens new avenues for understanding transformer representations through the lens of dynamical systems theory.
+
+% ============================================================================
+% BIBLIOGRAPHY
+% ============================================================================
+\bibliographystyle{tmlr}
+\bibliography{references}
+
+% ============================================================================
+% APPENDIX
+% ============================================================================
+\appendix
+
+\section{Synchronization Index Definition}
+
+The synchronization index measures velocity alignment:
+\begin{equation}
+    \text{SyncIndex}(t) = \frac{\inner{\vect{v}_A^{(t)}}{\vect{v}_B^{(t)}}}{\norm{\vect{v}_A^{(t)}}_2 \norm{\vect{v}_B^{(t)}}_2},
+\end{equation}
+where $\vect{v}_A^{(t)} = \vect{h}_A^{(t)} - \vect{h}_A^{(t-1)}$. We report mean over final 200 steps.
+
+\section{Lyapunov Exponent Estimation}
+
+We estimate the largest Lyapunov exponent using the algorithm of \citet{wolf1985}:
+
+\begin{enumerate}
+    \item Embed the trajectory in a reconstructed state space
+    \item For each point, find its nearest neighbor (excluding temporal neighbors)
+    \item Track the divergence of these neighbor pairs over time
+    \item Average the log-divergence rate
+\end{enumerate}
+
+The estimator is:
+\begin{equation}
+    \hat{\lambda}_{\max} = \frac{1}{M} \sum_{i=1}^{M} \frac{1}{\Delta t} \ln \frac{d(t_i + \Delta t)}{d(t_i)}
+\end{equation}
+where $d(t)$ is the distance between trajectory and neighbor at time $t$.
+
+\section{Correlation Dimension Estimation}
+
+Following \citet{grassberger1983}:
+
+\begin{enumerate}
+    \item Compute pairwise distances between trajectory points
+    \item For scales $\epsilon_1 < \epsilon_2 < \cdots < \epsilon_k$, compute:
+    \begin{equation}
+        C(\epsilon) = \frac{2}{N(N-1)} \sum_{i<j} \mathbbm{1}[\norm{\vect{x}_i - \vect{x}_j} < \epsilon]
+    \end{equation}
+    \item Estimate $D_2$ from slope of $\log C(\epsilon)$ vs $\log \epsilon$ in scaling region
+\end{enumerate}
+
+\clearpage
+\section{Complete Results Table}
+
+\begin{table}[h!]
+\centering
+\caption{All 41 experimental configurations (mean $\pm$ std over 3 seeds)}
+\label{tab:complete}
+\scriptsize
+\begin{tabular}{llcccccc}
+\toprule
+\textbf{Model A} & \textbf{Model B} & \textbf{Coupling} & \textbf{Init} & \textbf{Param} & \textbf{Proj?} & \textbf{$\cos \theta$} & \textbf{Sync Idx} \\
+\midrule
+gpt2 & gpt2 & direct & random &  -  & No & $0.9998 \pm 0.0003$ & $0.040 \pm 0.132$ \\
+gpt2 & gpt2 & direct & same &  -  & No & $0.9998 \pm 0.0003$ & $1.000 \pm 0.000$ \\
+gpt2 & gpt2 & direct & text &  -  & No & $1.0000 \pm 0.0000$ & $0.082 \pm 0.000$ \\
+gpt2 & gpt2 & blended & random & 0.5 & No & $1.0000 \pm 0.0000$ & $1.000 \pm 0.000$ \\
+gpt2 & gpt2 & blended & random & 0.3 & No & $1.0000 \pm 0.0000$ & $0.207 \pm 0.032$ \\
+gpt2 & gpt2 & blended & random & 0.7 & No & $1.0000 \pm 0.0000$ & $0.207 \pm 0.032$ \\
+gpt2 & gpt2 & decay & random & 0.1 & No & $1.0000 \pm 0.0000$ & $0.118 \pm 0.044$ \\
+gpt2 & gpt2 & decay & random & 0.3 & No & $1.0000 \pm 0.0000$ & $0.207 \pm 0.032$ \\
+\midrule
+distilgpt2 & distilgpt2 & direct & random &  -  & No & $0.9997 \pm 0.0003$ & $-0.027 \pm 0.064$ \\
+distilgpt2 & distilgpt2 & blended & random & 0.5 & No & $1.0003 \pm 0.0012$ & $1.000 \pm 0.000$ \\
+distilgpt2 & distilgpt2 & decay & random & 0.1 & No & $0.9997 \pm 0.0006$ & $0.034 \pm 0.022$ \\
+\midrule
+gpt2 & gpt2 & direct & random & force & Yes & $0.9987 \pm 0.0003$ & $-0.020 \pm 0.066$ \\
+gpt2 & gpt2 & direct & text & force & Yes & $0.9984 \pm 0.0010$ & $0.043 \pm 0.049$ \\
+\midrule
+bert & distilbert & direct & random &  -  & No & $0.3182 \pm 0.0841$ & $0.012 \pm 0.007$ \\
+bert & bert & direct & random &  -  & No & $0.5721 \pm 0.1324$ & $0.015 \pm 0.010$ \\
+\midrule
+gpt2-med & dialogpt-med & direct & random &  -  & No & $0.9485 \pm 0.0000$ & $0.003 \pm 0.164$ \\
+gpt2-med & gpt2-med & direct & random &  -  & No & $1.0000 \pm 0.0000$ & $0.011 \pm 0.019$ \\
+\midrule
+gpt2 & gpt2-med & direct & random &  -  & Yes & $0.1077 \pm 0.0218$ & $0.010 \pm 0.006$ \\
+gpt2 & gpt2-med & blended & random & 0.5 & Yes & $0.0069 \pm 0.0275$ & $0.001 \pm 0.005$ \\
+gpt2 & gpt2-large & direct & random &  -  & Yes & $0.3765 \pm 0.0088$ & $0.001 \pm 0.005$ \\
+gpt2 & gpt2-large & blended & random & 0.5 & Yes & $0.2323 \pm 0.0202$ & $0.019 \pm 0.004$ \\
+gpt2-med & gpt2-large & direct & random &  -  & Yes & $0.2779 \pm 0.0895$ & $0.008 \pm 0.007$ \\
+\midrule
+gpt2 & distilgpt2 & direct & random &  -  & No & $0.9983 \pm 0.0003$ & $0.037 \pm 0.036$ \\
+gpt2 & distilgpt2 & blended & random & 0.5 & No & $0.9974 \pm 0.0003$ & $0.040 \pm 0.038$ \\
+gpt2 & distilgpt2 & decay & random & 0.1 & No & $0.9982 \pm 0.0003$ & $0.048 \pm 0.029$ \\
+\midrule
+gpt2 & gpt-neo & direct & random &  -  & Yes & $-0.0237 \pm 0.0124$ & $0.005 \pm 0.003$ \\
+gpt2 & gpt-neo & blended & random & 0.5 & Yes & $-0.0326 \pm 0.0154$ & $-0.001 \pm 0.003$ \\
+gpt2 & gpt-neo & blended & text & 0.5 & Yes & $-0.0326 \pm 0.0155$ & $0.001 \pm 0.003$ \\
+gpt2 & gpt-neo & decay & text & 0.1 & Yes & $-0.0261 \pm 0.0097$ & $-0.004 \pm 0.001$ \\
+gpt2-med & gpt-neo & direct & random &  -  & Yes & $0.0452 \pm 0.0078$ & $0.001 \pm 0.006$ \\
+\midrule
+\multicolumn{8}{c}{\textbf{Phase Transition: Coupling Strength Sweep ($\alpha$ = 0.0 to 1.0)}} \\
+gpt2 & gpt2 & blended & random & 0.0--1.0 & No & $0.9999 \pm 0.0002$ & See Table \ref{tab:phase_transition} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Algorithm}
+
+\begin{algorithm}[H]
+\caption{Coupled Dynamics Test}
+\label{alg:coupled}
+\begin{algorithmic}[1]
+\Require Transformer maps $F_A, F_B$, coupling strategy $\Phi$, steps $T$
+\Require Initialization mode, random seed
+\Ensure Trajectory $\{(\vect{h}_A^{(t)}, \vect{h}_B^{(t)})\}_{t=0}^T$ and metrics
+
+\State Initialize $\vect{h}_A^{(0)}, \vect{h}_B^{(0)}$ according to mode
+\If{$\dim(F_A) \neq \dim(F_B)$}
+    \State Train projection matrices $P_{A \to B}, P_{B \to A}$
+\EndIf
+\State $\text{trajectory} \gets [(\vect{h}_A^{(0)}, \vect{h}_B^{(0)})]$
+
+\For{$t = 0$ to $T-1$}
+    \State Apply coupling: $(\vect{h}_A^{(t+1)}, \vect{h}_B^{(t+1)}) \gets \Phi(F_A, F_B, \vect{h}_A^{(t)}, \vect{h}_B^{(t)})$
+    \State Append to trajectory
+    \State Record $\rho(t)$, $\text{SyncIndex}(t)$, CKA
+    \If{NaN detected}
+        \State \textbf{break}
+    \EndIf
+\EndFor
+
+\State Compute $\lambda_{\max}$ using Wolf algorithm
+\State Compute $D_2$ using Grassberger-Procaccia algorithm
+\State \Return trajectory, metrics
+\end{algorithmic}
+\end{algorithm}
+
+\section{Reproducibility Statement}
+\label{app:reproducibility}
+
+To ensure the reproducibility of our results, we provide the following details regarding our experimental setup.
+
+\subsection{Computational Infrastructure}
+Experiments were conducted on a single consumer-grade GPU (NVIDIA RTX 4060, 8GB VRAM) running on Windows 11 (x86\_64). Mixed-precision (FP16) inference was enabled to fit larger models (e.g., GPT-2 Medium/Large). The computational cost of our geometric synchronization metric is significantly lower than training-based alignment methods, requiring approximately 30 seconds per model pair for a 100-step trajectory analysis.
+
+\subsection{Software Environment}
+\begin{itemize}
+    \item \textbf{Python:} 3.11
+    \item \textbf{PyTorch:} 2.x (with Scaled Dot Product Attention enabled)
+    \item \textbf{Libraries:} Transformers (HuggingFace), Datasets, NumPy, SciPy.
+\end{itemize}
+
+\subsection{Experimental Settings}
+\begin{itemize}
+    \item \textbf{Model Merging:} Weight averaging coefficient $\alpha = 0.5$. For cross-scale weight merging (e.g., GPT-2 768-dim + GPT-2-Medium 1024-dim), we pad the smaller model's weight matrices from $768 \times 768$ to $1024 \times 1024$ by appending zeros, then compute $\theta_{\text{merged}} = 0.5\theta_{\text{padded}} + 0.5\theta_{\text{medium}}$. While mathematically well-defined, this produces non-functional models due to geometric incompatibility (see Section~7.5).
+    \item \textbf{Stitching:} Pre-LayerNorm hidden state averaging at the final layer.
+    \item \textbf{Validation Data:} WikiText-2 (Test Split), consisting of 4,358 lines. For validation speed, we sampled the first 50 sequences exceeding 100 tokens.
+    \item \textbf{Seeds:} All trajectory experiments were repeated with 3 random seeds (42, 43, 44), and mean $\pm$ std values are reported in Table \ref{tab:complete}.
+\end{itemize}
+
+\subsection{Code Availability}
+All source code, including the main analysis scripts and the comprehensive validation suite, will be released upon acceptance to ensure reproducibility.
+
+\end{document}

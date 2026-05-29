@@ -1,0 +1,174 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\citation{hinton2015distilling,gou2021knowledge}
+\citation{li2019deepgkd}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1}Motivation}{1}{subsection.1.1}\protected@file@percent }
+\citation{wortsman2022model}
+\citation{kornblith2019similarity,ding2021grounding}
+\citation{haber2017stable,chen2018neuralode}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.2}Why This Matters}{2}{subsection.1.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.3}Contribution}{2}{subsection.1.3}\protected@file@percent }
+\citation{haber2017stable,chen2018neuralode}
+\citation{tsai2019transformer}
+\citation{kuramoto1984chemical}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Mathematical Framework}{3}{section.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Transformers as Iterated Function Systems}{3}{subsection.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Coupling Strategies}{3}{subsection.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.2.1}Direct Coupling}{3}{subsubsection.2.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.2.2}Blended Coupling}{3}{subsubsection.2.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.2.3}Decay Coupling}{3}{subsubsection.2.2.3}\protected@file@percent }
+\citation{ding2021grounding}
+\citation{wolf1985}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces \textbf  {Coupled Dynamics Testing.} Models exchange hidden states, testing whether their learned geometric transformations are compatible.}}{4}{figure.1}\protected@file@percent }
+\newlabel{fig:method_diagram}{{1}{4}{\textbf {Coupled Dynamics Testing.} Models exchange hidden states, testing whether their learned geometric transformations are compatible}{figure.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Synchronization Measures}{4}{subsection.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Dynamical System Characterization}{4}{subsection.2.4}\protected@file@percent }
+\citation{grassberger1983}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.5}Dimension Mismatch Handling}{5}{subsection.2.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}Experimental Setup}{5}{section.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Models}{5}{subsection.3.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Models used in experiments}}{5}{table.1}\protected@file@percent }
+\newlabel{tab:models}{{1}{5}{Models used in experiments}{table.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Initialization Strategies}{5}{subsection.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Experimental Protocol}{6}{subsection.3.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Projection Control Experiments}{6}{subsection.3.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}Results}{6}{section.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces \textbf  {Synchronization Trajectories.} Distillation pairs (green) rapidly synchronize to near-unity, while scaled models (orange) plateau at weak correlation and cross-architecture pairs (red) remain orthogonal. Note the ``locked-in'' stability once synchronization is achieved.}}{6}{figure.2}\protected@file@percent }
+\newlabel{fig:trajectories}{{2}{6}{\textbf {Synchronization Trajectories.} Distillation pairs (green) rapidly synchronize to near-unity, while scaled models (orange) plateau at weak correlation and cross-architecture pairs (red) remain orthogonal. Note the ``locked-in'' stability once synchronization is achieved}{figure.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Same Architecture: Perfect Synchronization}{6}{subsection.4.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Same-architecture coupling (3 seeds, 1000 steps)}}{7}{table.2}\protected@file@percent }
+\newlabel{tab:same_arch}{{2}{7}{Same-architecture coupling (3 seeds, 1000 steps)}{table.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Identical models with forced projections (3 seeds)}}{7}{table.3}\protected@file@percent }
+\newlabel{tab:projection_control}{{3}{7}{Identical models with forced projections (3 seeds)}{table.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Projection Control: Critical Validation}{7}{subsection.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Distillation: Geometry Preserved}{7}{subsection.4.3}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Teacher-student coupling: GPT-2 and DistilGPT-2 (3 seeds)}}{7}{table.4}\protected@file@percent }
+\newlabel{tab:distill}{{4}{7}{Teacher-student coupling: GPT-2 and DistilGPT-2 (3 seeds)}{table.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Fine-Tuning Effects}{7}{subsection.4.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5}Encoder Models: Different Dynamics}{7}{subsection.4.5}\protected@file@percent }
+\citation{hauser2021similar,ding2021grounding}
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Fine-tuning impact on geometric structure (3 seeds)}}{8}{table.5}\protected@file@percent }
+\newlabel{tab:finetuning}{{5}{8}{Fine-tuning impact on geometric structure (3 seeds)}{table.5}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces BERT-family synchronization: Variance stability across sample sizes}}{8}{table.6}\protected@file@percent }
+\newlabel{tab:bert}{{6}{8}{BERT-family synchronization: Variance stability across sample sizes}{table.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.6}Scale Effects Within Family}{8}{subsection.4.6}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces Cross-scale coupling in GPT-2 family (3 seeds)}}{8}{table.7}\protected@file@percent }
+\newlabel{tab:scale}{{7}{8}{Cross-scale coupling in GPT-2 family (3 seeds)}{table.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.7}Cross-Architecture: Orthogonality}{8}{subsection.4.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.8}Phase Transition in Coupling Strength}{8}{subsection.4.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}Dynamical Systems Analysis}{8}{section.5}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces GPT-2 vs GPT-Neo coupling (3 seeds)}}{9}{table.8}\protected@file@percent }
+\newlabel{tab:cross_arch}{{8}{9}{GPT-2 vs GPT-Neo coupling (3 seeds)}{table.8}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces \textbf  {Phase Transition at $\alpha = 0.5$.} Synchronization index shows a sharp discontinuity at equal blending, revealing the specific threshold required for perfect velocity alignment.}}{9}{figure.3}\protected@file@percent }
+\newlabel{fig:phase_transition}{{3}{9}{\textbf {Phase Transition at $\alpha = 0.5$.} Synchronization index shows a sharp discontinuity at equal blending, revealing the specific threshold required for perfect velocity alignment}{figure.3}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {9}{\ignorespaces Blended coupling parameter sweep: GPT-2 + GPT-2 (3 seeds)}}{9}{table.9}\protected@file@percent }
+\newlabel{tab:phase_transition}{{9}{9}{Blended coupling parameter sweep: GPT-2 + GPT-2 (3 seeds)}{table.9}{}}
+\citation{bertschinger2004real}
+\citation{langton1990computation,bertschinger2004real}
+\citation{langton1990computation,packard1988adaptation}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Lyapunov Exponent Analysis}{10}{subsection.5.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {10}{\ignorespaces Lyapunov Exponent Estimates (3 seeds)}}{10}{table.10}\protected@file@percent }
+\newlabel{tab:lyapunov}{{10}{10}{Lyapunov Exponent Estimates (3 seeds)}{table.10}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Attractor Dimension Analysis}{10}{subsection.5.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {11}{\ignorespaces Correlation Dimension Estimates (3 seeds)}}{10}{table.11}\protected@file@percent }
+\newlabel{tab:attractor}{{11}{10}{Correlation Dimension Estimates (3 seeds)}{table.11}{}}
+\citation{jacot2018neural}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Theoretical Analysis}{11}{section.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Synchronization as Manifold Alignment}{11}{subsection.6.1}\protected@file@percent }
+\newlabel{thm:convergence}{{6.1}{11}{Same-Architecture Convergence}{theorem.6.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Why Distillation Preserves Geometry}{11}{subsection.6.2}\protected@file@percent }
+\citation{jacot2018neural}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces \textbf  {Geometric Interpretation.} Student and teacher hidden states may differ in full space, but distillation forces their projections onto the subspace spanned by $\mathbf  {W}_{\text  {LM}}$ to align.}}{12}{figure.4}\protected@file@percent }
+\newlabel{fig:subspace_diagram}{{4}{12}{\textbf {Geometric Interpretation.} Student and teacher hidden states may differ in full space, but distillation forces their projections onto the subspace spanned by $\mathbf {W}_{\text {LM}}$ to align}{figure.4}{}}
+\newlabel{conj:tangent}{{6.5}{12}{Distillation Preserves Local Geometry}{theorem.6.5}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {6.2.1}The Role of Dimensionality}{12}{subsubsection.6.2.1}\protected@file@percent }
+\citation{wortsman2022model}
+\citation{elhage2021mathematical}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}Projection Control Interpretation}{13}{subsection.6.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.4}Fine-Tuning as Manifold Perturbation}{13}{subsection.6.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7}Implications}{13}{section.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}Model Merging}{13}{subsection.7.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}Transfer Learning and Interpretability}{13}{subsection.7.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.3}Multi-Agent Systems}{13}{subsection.7.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.4}The Learned Geometry Hypothesis}{14}{subsection.7.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.5}Empirical Validation}{14}{subsection.7.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{1. Weight Merging (Compatible Architectures)}{14}{section*.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{2. Representation Stitching (Incompatible Architectures)}{14}{section*.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {12}{\ignorespaces Comprehensive Validation Results (Evaluated on 30 WikiText-2 sequences)}}{14}{table.12}\protected@file@percent }
+\newlabel{tab:merging}{{12}{14}{Comprehensive Validation Results (Evaluated on 30 WikiText-2 sequences)}{table.12}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.6}Practical Guidelines}{14}{subsection.7.6}\protected@file@percent }
+\citation{hinton2015distilling}
+\citation{sanh2019distilbert}
+\citation{li2019deepgkd,liu2023embeddistill,yuan2021manifoldkd}
+\citation{kornblith2019similarity}
+\citation{ding2021grounding}
+\citation{raghu2017svcca}
+\citation{hauser2021similar}
+\citation{wortsman2022model}
+\citation{frankle2020linear}
+\citation{bansal2021stitching}
+\citation{haber2017stable,chen2018neuralode}
+\citation{jacot2018neural}
+\citation{tsai2019transformer}
+\citation{wolf1985,grassberger1983}
+\citation{kuramoto1984chemical,strogatz2000,pecora1990}
+\citation{kaplan2020scaling}
+\@writefile{toc}{\contentsline {section}{\numberline {8}Related Work}{15}{section.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.1}Knowledge Distillation}{15}{subsection.8.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.2}Representation Similarity}{15}{subsection.8.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.3}Model Merging and Stitching}{15}{subsection.8.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.4}Neural Network Geometry and Dynamical Systems}{15}{subsection.8.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.5}Synchronization Theory}{15}{subsection.8.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.6}Scaling Laws}{15}{subsection.8.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {9}Limitations}{15}{section.9}\protected@file@percent }
+\bibdata{references}
+\bibcite{bansal2021stitching}{{1}{2021}{{Bansal et~al.}}{{Bansal, Nakkiran, and Barak}}}
+\@writefile{toc}{\contentsline {section}{\numberline {10}Conclusion}{16}{section.10}\protected@file@percent }
+\bibcite{bertschinger2004real}{{2}{2004}{{Bertschinger \& Natschl{\"a}ger}}{{Bertschinger and Natschl{\"a}ger}}}
+\bibcite{chen2018neuralode}{{3}{2018}{{Chen et~al.}}{{Chen, Rubanova, Bettencourt, and Duvenaud}}}
+\bibcite{ding2021grounding}{{4}{2021}{{Ding et~al.}}{{Ding, Denain, and Steinhardt}}}
+\bibcite{elhage2021mathematical}{{5}{2021}{{Elhage et~al.}}{{Elhage, Nanda, Olsson, Henighan, Joseph, Mann, Askell, Bai, Chen, Conerly, et~al.}}}
+\bibcite{frankle2020linear}{{6}{2020}{{Frankle et~al.}}{{Frankle, Dziugaite, Roy, and Carbin}}}
+\bibcite{gou2021knowledge}{{7}{2021}{{Gou et~al.}}{{Gou, Yu, Maybank, and Tao}}}
+\bibcite{grassberger1983}{{8}{1983}{{Grassberger \& Procaccia}}{{Grassberger and Procaccia}}}
+\bibcite{haber2017stable}{{9}{2017}{{Haber \& Ruthotto}}{{Haber and Ruthotto}}}
+\bibcite{hauser2021similar}{{10}{2021}{{Hauser et~al.}}{{Hauser, Meng, et~al.}}}
+\bibcite{hinton2015distilling}{{11}{2015}{{Hinton et~al.}}{{Hinton, Vinyals, and Dean}}}
+\bibcite{jacot2018neural}{{12}{2018}{{Jacot et~al.}}{{Jacot, Gabriel, and Hongler}}}
+\bibcite{kaplan2020scaling}{{13}{2020}{{Kaplan et~al.}}{{Kaplan, McCandlish, Henighan, Brown, et~al.}}}
+\bibcite{kornblith2019similarity}{{14}{2019}{{Kornblith et~al.}}{{Kornblith, Norouzi, Lee, and Hinton}}}
+\bibcite{kuramoto1984chemical}{{15}{1984}{{Kuramoto}}{{}}}
+\bibcite{langton1990computation}{{16}{1990}{{Langton}}{{}}}
+\bibcite{li2019deepgkd}{{17}{2020}{{Li et~al.}}{{Li, Wang, Wang, Li, Yang, and Wang}}}
+\bibcite{liu2023embeddistill}{{18}{2023}{{Liu et~al.}}{{}}}
+\bibcite{packard1988adaptation}{{19}{1988}{{Packard}}{{}}}
+\bibcite{pecora1990}{{20}{1990}{{Pecora \& Carroll}}{{Pecora and Carroll}}}
+\bibcite{raghu2017svcca}{{21}{2017}{{Raghu et~al.}}{{Raghu, Gilmer, Yosinski, and Sohl-Dickstein}}}
+\bibcite{sanh2019distilbert}{{22}{2019}{{Sanh et~al.}}{{Sanh, Debut, Chaumond, and Wolf}}}
+\bibcite{strogatz2000}{{23}{2000}{{Strogatz}}{{}}}
+\bibcite{tsai2019transformer}{{24}{2019}{{Tsai et~al.}}{{Tsai, Bai, Yamada, Morency, and Salakhutdinov}}}
+\bibcite{wolf1985}{{25}{1985}{{Wolf et~al.}}{{Wolf, Swift, Swinney, and Vastano}}}
+\bibcite{wortsman2022model}{{26}{2022}{{Wortsman et~al.}}{{Wortsman, Ilharco, Gadre, Roelofs, Gontijo-Lopes, Morcos, Namkoong, Farhadi, Carmon, Kornblith, and Schmidt}}}
+\bibcite{yuan2021manifoldkd}{{27}{2021}{{Yuan et~al.}}{{}}}
+\bibstyle{tmlr}
+\citation{wolf1985}
+\citation{grassberger1983}
+\@writefile{toc}{\contentsline {section}{\numberline {A}Synchronization Index Definition}{18}{appendix.A}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {B}Lyapunov Exponent Estimation}{18}{appendix.B}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {C}Correlation Dimension Estimation}{19}{appendix.C}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {D}Complete Results Table}{19}{appendix.D}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {13}{\ignorespaces All 41 experimental configurations (mean $\pm $ std over 3 seeds)}}{19}{table.13}\protected@file@percent }
+\newlabel{tab:complete}{{13}{19}{All 41 experimental configurations (mean $\pm $ std over 3 seeds)}{table.13}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {E}Algorithm}{20}{appendix.E}\protected@file@percent }
+\@writefile{loa}{\contentsline {algorithm}{\numberline {1}{\ignorespaces Coupled Dynamics Test}}{20}{algorithm.1}\protected@file@percent }
+\newlabel{alg:coupled}{{1}{20}{Algorithm}{algorithm.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {F}Reproducibility Statement}{20}{appendix.F}\protected@file@percent }
+\newlabel{app:reproducibility}{{F}{20}{Reproducibility Statement}{appendix.F}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {F.1}Computational Infrastructure}{20}{subsection.F.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {F.2}Software Environment}{20}{subsection.F.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {F.3}Experimental Settings}{20}{subsection.F.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {F.4}Code Availability}{21}{subsection.F.4}\protected@file@percent }
+\gdef \@abspage@last{21}

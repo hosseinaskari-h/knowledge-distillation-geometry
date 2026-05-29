@@ -1,0 +1,33 @@
+
+Config                                                                           | Paper      | Repro      | Diff       | Status
+----------------------------------------------------------------------------------------------------------------------------------
+bert-base-uncased+bert-base-uncased (direct)                                     | 0.5721     | 0.5241     | -0.0480    | WARN
+bert-base-uncased+distilbert-base-uncased (direct)                               | 0.3182     | 0.2436     | -0.0746    | WARN
+distilgpt2+distilgpt2 (blended) a=0.5                                            | 1.0000     | 1.0000     | -0.0000    | PASS
+distilgpt2+distilgpt2 (decay) d=0.1                                              | 1.0000     | 1.0000     | -0.0000    | PASS
+distilgpt2+distilgpt2 (direct)                                                   | 1.0000     | 1.0000     | -0.0000    | PASS
+gpt2+gpt-neo-1.3B (blended) a=0.5 PROJ                                           | -0.0326    | -0.0322    | 0.0004     | PASS
+gpt2+gpt-neo-1.3B (blended) a=0.5 PROJ text                                      | -0.0326    | -0.0367    | -0.0041    | PASS
+gpt2+gpt-neo-1.3B (direct) PROJ                                                  | -0.0237    | -0.0290    | -0.0053    | PASS
+gpt2+distilgpt2 (blended) a=0.5                                                  | 0.9974     | 0.9970     | -0.0004    | PASS
+gpt2+distilgpt2 (decay) d=0.1                                                    | 0.9982     | 0.9985     | 0.0003     | PASS
+gpt2+distilgpt2 (direct)                                                         | 0.9986     | 0.9986     | 0.0000     | PASS
+gpt2+gpt2-large (blended) a=0.5 PROJ                                             | 0.2323     | 0.2143     | -0.0180    | PASS
+gpt2+gpt2-large (direct) PROJ                                                    | 0.3765     | 0.3592     | -0.0173    | PASS
+gpt2+gpt2-medium (blended) a=0.5 PROJ                                            | 0.0069     | 0.0288     | 0.0219     | WARN
+gpt2+gpt2-medium (direct) PROJ                                                   | 0.1220     | 0.1126     | -0.0094    | PASS
+gpt2+gpt2 (blended) a=0.3                                                        | 1.0000     | 1.0000     | -0.0000    | PASS
+gpt2+gpt2 (blended) a=0.5                                                        | 1.0000     | 1.0000     | -0.0000    | PASS
+gpt2+gpt2 (blended) a=0.7                                                        | 1.0000     | 1.0000     | -0.0000    | PASS
+gpt2+gpt2 (decay) d=0.1                                                          | 1.0000     | 1.0000     | -0.0000    | PASS
+gpt2+gpt2 (decay) d=0.3                                                          | 1.0000     | 1.0000     | -0.0000    | PASS
+gpt2+gpt2 (direct)                                                               | 1.0000     | 1.0000     | -0.0000    | PASS
+gpt2+gpt2 (direct) PROJ                                                          | 0.9987     | 0.9984     | -0.0003    | PASS
+gpt2+gpt2 (direct) same                                                          | 1.0000     | 1.0000     | -0.0000    | PASS
+gpt2+gpt2 (direct) text                                                          | 1.0000     | 1.0000     | -0.0000    | PASS
+gpt2+gpt2 (direct) PROJ text                                                     | 0.9984     | 0.9988     | 0.0004     | PASS
+gpt2-medium+gpt2-large (direct) PROJ                                             | 0.2779     | 0.3139     | 0.0360     | WARN
+gpt2-medium+gpt2-medium (direct)                                                 | 1.0000     | 1.0000     | 0.0000     | PASS
+gpt2-medium+DialoGPT-medium (direct)                                             | 0.9485     | 0.9485     | -0.0000    | PASS
+----------------------------------------------------------------------------------------------------------------------------------
+Summary: 24 PASS, 4 FAIL/WARN, 0 MISSING CLAIMS, 0 SWEEP RUNS
