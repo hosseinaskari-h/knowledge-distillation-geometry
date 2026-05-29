@@ -1,9 +1,14 @@
-\begin{thebibliography}{49}
+\begin{thebibliography}{52}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
   \providecommand{\doi}[1]{doi: #1}\else
   \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[dav(2023)]{davari2023model}
+Model ratatouille: Recycling diverse models for out-of-distribution
+  generalization.
+\newblock In \emph{International Conference on Machine Learning}, 2023.
 
 \bibitem[Abnar et~al.(2019)Abnar, Beinborn, Choenni, and
   Zuidema]{abnar2019blackbox}
@@ -42,12 +47,6 @@ Xingyu Cai, Jiaji Huang, Yuchen Bian, and Kenneth Church.
 Ricky T.~Q. Chen, Yulia Rubanova, Jesse Bettencourt, and David~K Duvenaud.
 \newblock Neural ordinary differential equations.
 \newblock In \emph{Advances in Neural Information Processing Systems}, 2018.
-
-\bibitem[Davari et~al.(2023)Davari, Rame, Cord, and Alizadeh]{davari2023model}
-Alexandre Davari, Alexandre Rame, Matthieu Cord, and Milad Alizadeh.
-\newblock Model ratatouille: Recycling diverse models for out-of-distribution
-  generalization.
-\newblock In \emph{International Conference on Machine Learning}, 2023.
 
 \bibitem[Dehghani et~al.(2019)Dehghani, Gouws, Vinyals, Uszkoreit, and
   Kaiser]{dehghani2019universal}
@@ -94,12 +93,6 @@ Borjan Geshkovski, Cyril Letrouit, Yury Polyanskiy, and Philippe Rigollet.
 \newblock A mathematical perspective on transformers.
 \newblock \emph{Bulletin of the American Mathematical Society}, 61\penalty0
   (4):\penalty0 375--403, 2024.
-
-\bibitem[Gou et~al.(2021)Gou, Yu, Maybank, and Tao]{gou2021knowledge}
-Jianping Gou, Baosheng Yu, Stephen~J Maybank, and Dacheng Tao.
-\newblock Knowledge distillation: A survey.
-\newblock \emph{International Journal of Computer Vision}, 129\penalty0
-  (6):\penalty0 1789--1819, 2021.
 
 \bibitem[Grassberger \& Procaccia(1983)Grassberger and
   Procaccia]{grassberger1983}
@@ -269,6 +262,25 @@ Sidak~Pal Singh and Martin Jaggi.
 \newblock Model fusion via optimal transport.
 \newblock In \emph{Advances in Neural Information Processing Systems}, 2020.
 
+\bibitem[Sirikova \& Chan(2026)Sirikova and Chan]{sirikova2026triangle}
+Olha Sirikova and Alvin Chan.
+\newblock The triangle of similarity: A multi-faceted framework for comparing
+  neural network representations.
+\newblock \emph{arXiv preprint arXiv:2601.17093}, 2026.
+
+\bibitem[Song \& Zheng(2026)Song and Zheng]{song2026model}
+Mingyang Song and Mao Zheng.
+\newblock Model merging in the era of large language models: Methods,
+  applications, and future directions.
+\newblock \emph{arXiv preprint arXiv:2603.09938}, 2026.
+
+\bibitem[Stoica et~al.(2025)Stoica, Ramesh, Ecsedi, Choshen, and
+  Hoffman]{stoica2025knots}
+George Stoica, Pratik Ramesh, Boglarka Ecsedi, Leshem Choshen, and Judy
+  Hoffman.
+\newblock Model merging with {SVD} to tie the knots.
+\newblock In \emph{International Conference on Learning Representations}, 2025.
+
 \bibitem[Strogatz(2000)]{strogatz2000}
 Steven~H Strogatz.
 \newblock From kuramoto to crawford: Exploring the onset of synchronization in
@@ -305,6 +317,12 @@ Prateek Yadav, Derek Tam, Leshem Choshen, Colin Raffel, and Mohit Bansal.
 \newblock Resolving interference when merging models.
 \newblock In \emph{Advances in Neural Information Processing Systems},
   volume~36, 2023.
+
+\bibitem[Yang et~al.(2024)Yang, Shen, et~al.]{yang2024model}
+Enneng Yang, Li~Shen, et~al.
+\newblock Model merging in llms, mllms, and beyond: Methods, theories,
+  applications and opportunities.
+\newblock \emph{arXiv preprint arXiv:2408.07666}, 2024.
 
 \bibitem[Yu et~al.(2024)Yu, Yu, Yu, Huang, and Li]{yu2024dare}
 Le~Yu, Bowen Yu, Haiyang Yu, Fei Huang, and Yongbin Li.
