@@ -17,10 +17,10 @@ from .vector_dynamics import (
 )
 
 __all__ = [
-    # Branch 1: Text-based RL
+    # Text-based RL
     'MARLTrainer',
     'ValueNetwork',
-    # Branch 2: Vector Dynamics
+    # Vector Dynamics
     'VectorDynamicsTrainer',
     'DynamicsState',
     'DynamicsTrajectory',

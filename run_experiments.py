@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Terminal Experiment Runner for Coupled Transformer Dynamics
+ Experiment Runner for Coupled Transformer Dynamics
 
 CLI-based interface for running all paper experiments without the GUI.
 Uses the existing modular architecture in src/.
@@ -55,9 +55,7 @@ from src.analysis.merging import (
 logger = logging.getLogger(__name__)
 
 
-# =============================================================================
-# TERMINAL COLORS
-# =============================================================================
+# TERMINAL
 
 class Colors:
     """ANSI color codes for terminal output."""
@@ -87,17 +85,12 @@ def cprint(msg: str, color: str = '', bold: bool = False):
 
 def header(msg: str):
     """Print a major section header."""
-    line = '=' * 80
-    cprint(f"\n{line}", Colors.GREEN, bold=True)
-    cprint(msg, Colors.GREEN, bold=True)
-    cprint(line, Colors.GREEN, bold=True)
+    cprint(f"\n{msg}", Colors.GREEN, bold=True)
 
 
 def subheader(msg: str):
     """Print a sub-section header."""
-    cprint(f"\n{'#' * 80}", Colors.CYAN)
-    cprint(f"# {msg}", Colors.CYAN, bold=True)
-    cprint('#' * 80, Colors.CYAN)
+    cprint(f"\n# {msg}", Colors.CYAN, bold=True)
 
 
 def info(msg: str):
@@ -107,17 +100,17 @@ def info(msg: str):
 
 def success(msg: str):
     """Print success message."""
-    cprint(f"  ✓ {msg}", Colors.GREEN)
+    cprint(f"  [+] {msg}", Colors.GREEN)
 
 
 def warn(msg: str):
     """Print warning message."""
-    cprint(f"  ⚠ {msg}", Colors.YELLOW)
+    cprint(f"  [!] {msg}", Colors.YELLOW)
 
 
 def error(msg: str):
     """Print error message."""
-    cprint(f"  ✗ {msg}", Colors.RED, bold=True)
+    cprint(f"  [x] {msg}", Colors.RED, bold=True)
 
 
 def result_line(label: str, value: str):
@@ -165,9 +158,7 @@ def setup_logging(verbose: bool = False):
         logging.getLogger(noisy).setLevel(logging.WARNING)
 
 
-# =============================================================================
 # CONFIGURATION
-# =============================================================================
 
 # Paper experiment configurations (Legacy)
 PAPER_CONFIGS = {
@@ -279,9 +270,7 @@ for alpha in [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]:
     })
 
 
-# =============================================================================
 # HELPER FUNCTIONS
-# =============================================================================
 
 class NpEncoder(json.JSONEncoder):
     """JSON encoder that handles numpy/torch types."""
@@ -345,11 +334,7 @@ def load_model_pair(model_a_name: str, model_b_name: str, device: str):
     ).to(device)
     model_b.eval()
 
-    # Load tokenizer (usually from model A is fine for GPT2 family)
-    # For BERT, we might need specific tokenizer, but Agent handles input text -> hidden?
-    # No, Agent.get_hidden_from_text uses ITS OWN tokenizer.
-    # But here we return ONE tokenizer for CKA/Merge.
-    # VectorDynamicsTrainer uses separate Agents which load their own tokenizers.
+ 
     tokenizer = AutoTokenizer.from_pretrained(model_a_name)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
@@ -361,9 +346,7 @@ def load_model_pair(model_a_name: str, model_b_name: str, device: str):
     return model_a, model_b, tokenizer
 
 
-# =============================================================================
 # EXPERIMENT RUNNERS
-# =============================================================================
 
 def run_coupled_dynamics(
     model_a_name: str,
@@ -479,9 +462,7 @@ def run_coupled_dynamics(
         'runs': all_results,
     }
 
-    cprint(f"\n{'=' * 80}", Colors.GREEN)
     success(f"SUMMARY: cos θ = {summary['mean_final_cos']:.4f} ± {summary['std_final_cos']:.4f}")
-    cprint(f"{'=' * 80}", Colors.GREEN)
 
     # Cleanup
     del agent_a, agent_b
@@ -552,12 +533,9 @@ def run_cka_experiment(
         torch.cuda.empty_cache()
 
     # Summary table
-    cprint(f"\n{'=' * 80}", Colors.GREEN)
-    cprint(f"{'Pair':<45} | {'CKA':<8} | {'cos θ':<10}", Colors.WHITE, bold=True)
-    cprint("-" * 70, Colors.DIM)
+    cprint(f"\n{'Pair':<45} | {'CKA':<8} | {'cos θ':<10}", Colors.WHITE, bold=True)
     for r in results:
         cprint(f"{r['pair']:<45} | {r['cka']:<8.4f} | {r['cos_theta']:<10.4f}", Colors.WHITE)
-    cprint("=" * 80, Colors.GREEN)
 
     summary = {'experiment': 'cka_table', 'pairs': results}
     save_results(summary, output_dir, 'cka')
@@ -653,17 +631,11 @@ def run_full_validation(
 ) -> dict:
     """Run the legacy validation suite."""
     header("FULL PAPER VALIDATION (LEGACY)")
-    # Re-using previous implementation structure but calling reproduction logic?
-    # No, keep legacy behavior distinct as requested by user ("run all 123 tests... AND compare").
-    # Legacy validation only covered subset. 
-    # This function creates 'full_validation_*.json'
-    
-    # We will just run the subset here as before.
+
     
     all_results = {}
     
-    # ... (Keep existing implementation logic simplified for brevity in overwrite) ...
-    # Actually, I'll just map it to run the specific keys from PAPER_CONFIGS
+
     
     keys = ["identity", "distillation", "finetuning_small", "finetuning_medium", "cross_scale"]
     
@@ -691,9 +663,7 @@ def run_full_validation(
     return all_results
 
 
-# =============================================================================
 # CLI
-# =============================================================================
 
 def parse_args():
     parser = argparse.ArgumentParser(

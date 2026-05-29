@@ -91,7 +91,7 @@ class DirectCoupling(CouplingStrategy):
     state_a(t+1) = F_a(state_b(t))
     state_b(t+1) = F_b(state_a(t))
 
-    This is the purest form - each agent transforms the other's state.
+     each agent transforms the other's state.
     """
 
     def __init__(self, force_projection: bool = False):
@@ -164,7 +164,7 @@ class DirectCoupling(CouplingStrategy):
         if dim_a != dim_b or self.force_projection:
             device = state_a.device
             
-            # Train if needed (lazy initialization)
+            # Train if needed 
             if not self.is_trained:
                 self.train_projections(agent_a, agent_b)
 
@@ -498,9 +498,7 @@ class VectorDynamicsTrainer:
         return (a - b).norm().item()
 
 
-# =============================================================================
 # Dynamics Analysis Functions
-# =============================================================================
 
 def compute_synchronization_index(trajectory: DynamicsTrajectory) -> float:
     """
@@ -720,9 +718,7 @@ def analyze_trajectory(trajectory: DynamicsTrajectory) -> Dict:
     return results
 
 
-# =============================================================================
 # Convenience Functions
-# =============================================================================
 
 def create_coupling_strategy(name: str, config: dict) -> CouplingStrategy:
     """Factory function for coupling strategies"""

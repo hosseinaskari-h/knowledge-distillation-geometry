@@ -22,7 +22,7 @@ class GeometricAnalyzer:
 
     def ricci_curvature(self, k: int = 5, n_samples: int = 100) -> Dict:
         """
-        Estimate Ollivier-Ricci curvature
+        Estimate Ricci curvature
 
         Returns distribution of curvatures across edges
         """

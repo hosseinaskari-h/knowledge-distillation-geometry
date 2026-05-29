@@ -19,9 +19,6 @@ def gram_rbf(x, threshold=1.0):
     dot_products = x @ x.t()
     sq_norms = (x**2).sum(dim=1).view(-1, 1)
     sq_dists = sq_norms + sq_norms.t() - 2 * dot_products
-    # Use median distance heuristic for bandwidth
-    # sigma = torch.median(sq_dists)
-    # return torch.exp(-sq_dists / (2 * sigma))
     return torch.exp(-sq_dists / (2 * threshold**2))
 
 def center_gram(k, n):
@@ -31,7 +28,7 @@ def center_gram(k, n):
 
 def cka(gram_x, gram_y, debiased=False):
     """Compute CKA given two Gram matrices"""
-    # Note: debiased CKA is strictly better but standard CKA is more common
+    # debiased CKA is strictly better but standard CKA is more common
     # For simplicity we implement standard CKA here
     
     # Center matrices
@@ -40,7 +37,6 @@ def cka(gram_x, gram_y, debiased=False):
     gy_c = center_gram(gram_y, n)
 
     # Compute CKA
-    # trace(GX * GY) / sqrt(trace(GX * GX) * trace(GY * GY))
     scaled_hsic = torch.sum(gx_c * gy_c)
     norm_x = torch.sqrt(torch.sum(gx_c * gx_c))
     norm_y = torch.sqrt(torch.sum(gy_c * gy_c))
@@ -93,7 +89,6 @@ def compute_model_cka(
     """
     Compute CKA between two models on a set of texts.
 
-    This is the numerically stable version that:
     - Converts activations to float32 (avoids fp16 NaN)
     - Centers representations before Gram matrix computation
     - Handles dimension mismatches via truncation

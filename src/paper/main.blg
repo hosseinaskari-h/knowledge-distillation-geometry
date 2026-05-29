@@ -5,44 +5,47 @@ Reallocating 'name_of_file' (item size: 1) to 5 items.
 The style file: tmlr.bst
 Reallocating 'name_of_file' (item size: 1) to 11 items.
 Database file #1: references.bib
-You've used 49 entries,
+Warning--to sort, need author or key in davari2023model
+Warning--empty author in davari2023model
+You've used 52 entries,
             2773 wiz_defined-function locations,
-            806 strings with 13602 characters,
-and the built_in function-call counts, 24584 in all, are:
-= -- 1950
-> -- 1868
-< -- 18
-+ -- 628
-- -- 579
-* -- 2039
-:= -- 3831
-add.period$ -- 148
-call.type$ -- 49
-change.case$ -- 333
-chr.to.int$ -- 49
-cite$ -- 98
-duplicate$ -- 1123
-empty$ -- 1942
-format.name$ -- 643
-if$ -- 5104
+            815 strings with 14028 characters,
+and the built_in function-call counts, 25466 in all, are:
+= -- 2023
+> -- 1909
+< -- 20
++ -- 643
+- -- 591
+* -- 2089
+:= -- 3959
+add.period$ -- 156
+call.type$ -- 52
+change.case$ -- 345
+chr.to.int$ -- 52
+cite$ -- 107
+duplicate$ -- 1183
+empty$ -- 2033
+format.name$ -- 661
+if$ -- 5298
 int.to.chr$ -- 1
 int.to.str$ -- 1
-missing$ -- 50
-newline$ -- 253
-num.names$ -- 196
-pop$ -- 779
+missing$ -- 53
+newline$ -- 267
+num.names$ -- 204
+pop$ -- 811
 preamble$ -- 1
-purify$ -- 285
+purify$ -- 294
 quote$ -- 0
-skip$ -- 822
+skip$ -- 867
 stack$ -- 0
-substring$ -- 377
-swap$ -- 100
+substring$ -- 353
+swap$ -- 104
 text.length$ -- 4
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 534
-warning$ -- 0
-while$ -- 170
+type$ -- 567
+warning$ -- 2
+while$ -- 174
 width$ -- 0
-write$ -- 609
+write$ -- 642
+(There were 2 warnings)

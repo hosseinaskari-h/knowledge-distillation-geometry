@@ -70,7 +70,7 @@
 % ============================================================================
 % TITLE AND AUTHORS
 % ============================================================================
-\title{Knowledge Distillation Preserves Representational Geometry:\\ Evidence from Coupled Transformer Dynamics\\ and Attractor Analysis}
+\title{Predicting Transformer Compatibility through Coupled Dynamics and State Exchange}
 
 % Authors must not appear in the submitted version. They should be hidden
 % as long as the tmlr package is used without the [accepted] or [preprint] options.
@@ -98,11 +98,11 @@
 % ABSTRACT
 % ============================================================================
 \begin{abstract}
-Knowledge distillation compresses neural networks by training smaller ``student'' models to match larger ``teacher'' output distributions. While distillation preserves task performance, the fate of internal representational geometry remains unclear, and standard similarity metrics like Centered Kernel Alignment (CKA) fail to reliably assess geometric compatibility. We introduce \textbf{coupled dynamics testing}, a diagnostic that treats transformers as iterated function systems and measures whether two models synchronize when exchanging hidden states directly in embedding space. Through 123 experiments across 41 configurations, we demonstrate that (1) identical architectures rapidly synchronize ($\cos \theta \to 1.0$), (2) different architecture families remain orthogonal ($\cos \theta \approx 0$), (3) DistilGPT-2 synchronizes with GPT-2 at $\cos \theta = 0.999$ despite 50\% depth reduction, proving distillation preserves manifold geometry, and (4) this metric \textbf{predicts functional compatibility where CKA fails}: GPT-2 + GPT-2-Medium show higher CKA ($0.84$) than GPT-2-Medium + DialoGPT-Medium ($0.49$), yet cos~$\theta$ correctly identifies DialoGPT as compatible ($0.949$) and GPT-2-Medium as incompatible ($0.12$), confirmed by weight merging experiments. Additional findings include that task-specific fine-tuning preserves 95\% of geometric structure, projection control experiments confirm intrinsic geometric compatibility, and encoder-only models exhibit weaker synchronization dynamics (a preliminary finding requiring further study). Dynamical analysis reveals synchronized states occupy low-dimensional attractors ($D_2 \approx 0$--$2.3$) with Lyapunov exponents at the edge of chaos ($\lambda_{\max} \approx 0.08$--$0.10$). Our coupled dynamics diagnostic provides a fast ($\sim$30 seconds per model pair), reliable pre-merge compatibility test with implications for model merging, transfer learning, and multi-agent systems.
+As neural networks transition from isolated systems to modular components that can be merged, stacked, or ensembled, predicting whether two models are functionally compatible becomes critical. While static representational similarity metrics like Centered Kernel Alignment (CKA) excel at comparing spatial feature alignments, they are not designed to capture the dynamical alignment required for functional compatibility, such as weight merging. We introduce \textbf{coupled dynamics testing}, a novel diagnostic that treats transformers as iterated function systems and measures whether two models synchronize when exchanging hidden states directly in embedding space. Through 123 experiments across 41 configurations, we demonstrate that (1) identical architectures rapidly synchronize ($\cos \theta \to 1.0$), (2) different architecture families remain fundamentally orthogonal ($\cos \theta \approx 0$), and (3) DistilGPT-2 synchronizes with GPT-2 at $\cos \theta = 0.998$ despite a 50\% reduction in depth. Crucially, we demonstrate that this dynamic metric \textbf{captures functional compatibility where static metrics can diverge}: GPT-2 + GPT-2-Medium show higher CKA ($0.84$) than GPT-2-Medium + DialoGPT-Medium ($0.49$), yet our dynamical diagnostic ($\cos \theta$) better aligns with functional outcomes, identifying DialoGPT as compatible ($0.949$) and GPT-2-Medium as incompatible ($0.12$), predictions confirmed by weight merging experiments. Dynamical analysis reveals synchronized states occupy low-dimensional attractors ($D_2 \approx 0$--$2.3$) with Lyapunov exponents indicating edge-of-chaos dynamics ($\lambda_{\max} \approx 0.08$--$0.10$). Rather than challenging static metrics, our coupled dynamics diagnostic provides a complementary, fast ($\sim$30 seconds per model pair) pre-merge compatibility test rooted in dynamical systems theory.
 \end{abstract}
 
 
-\textbf{Keywords:} knowledge distillation, representation geometry, transformer networks, dynamical systems, synchronization, attractor dynamics, model compression, neural network interpretability
+\textbf{Keywords:} model compatibility, representation geometry, transformer networks, dynamical systems, synchronization, model merging, knowledge distillation, attractor dynamics
 
 % ============================================================================
 % 1. INTRODUCTION
@@ -111,61 +111,44 @@ Knowledge distillation compresses neural networks by training smaller ``student'
 
 \subsection{Motivation}
 
-Knowledge distillation \citep{hinton2015distilling,gou2021knowledge} has become a standard technique for model compression, enabling deployment of large language models in resource-constrained environments. The typical objective minimizes KL divergence between teacher and student output distributions:
+As the ecosystem of pretrained transformers expands, integrating multiple models through techniques like weight merging \citep{wortsman2022model}, task arithmetic \citep{ilharco2023task}, or representation stitching \citep{bansal2021stitching} has become increasingly common. Central to these techniques is the challenge of \textit{compatibility}: how do we know ahead of time if two distinct neural networks are functionally aligned enough to be merged or coupled?
+
+The standard tool for comparing internal representations is representational similarity analysis, most commonly Centered Kernel Alignment (CKA) \citep{kornblith2019similarity}. CKA is highly effective at measuring the static spatial similarity of activations across models for a given input. However, static alignment does not necessarily guarantee functional or dynamical compatibility when models are structurally manipulated. Because CKA was designed to compare representational geometry rather than operational dynamics, relying solely on static metrics for predicting dynamic outcomes like weight merging can lead to unexpected results. For instance, in our experimental evaluations, CKA assigns higher similarity to GPT-2 + GPT-2-Medium (which fail catastrophically when merged) than to GPT-2-Medium + DialoGPT-Medium (which merge successfully).
+
+We propose a complementary, dynamic approach. Rather than comparing static snapshots of representations, we treat transformers as iterated function systems \citep{haber2017stable,chen2018neuralode} and study what happens when two models interact dynamically. By having models exchange hidden states directly in the embedding space, bypassing tokenization entirely, we can observe their coupled dynamics:
 \begin{equation}
-    \mathcal{L}_{\text{distill}} = \text{KL}\left(p_{\text{teacher}}(\cdot | x) \,\|\, p_{\text{student}}(\cdot | x)\right).
+    \vect{h}_A \xrightarrow{\text{direct exchange}} \vect{h}_B
 \end{equation}
+By bypassing the bottleneck of tokenization (which collapses continuous representations to discrete tokens), we reveal the underlying dynamical compatibility between the models' learned geometric transformations. Recent work demonstrates that transformers can meaningfully process continuous hidden states \citep{hao2024coconut,dehghani2019universal}; we extend this principle to inter-model coupling.
 
-This objective focuses on \textit{behavioral} matching, the student should produce similar outputs. But what about the \textit{internal geometry} of the representation space? Does the student learn the same ``shape'' of the embedding manifold \citep{li2019deepgkd}, or merely a different manifold that happens to produce similar outputs?
-
-The standard tool for answering this question is representational similarity analysis, most commonly Centered Kernel Alignment (CKA) \citep{kornblith2019similarity}, which compares static snapshots of activations across models. However, we show that \textbf{CKA is insufficient for this purpose}: CKA ranks GPT-2 + GPT-2-Medium ($\text{CKA} = 0.84$) as \textit{more similar} than GPT-2-Medium + DialoGPT-Medium ($\text{CKA} = 0.49$), yet weight merging reveals the exact opposite ordering, DialoGPT merges successfully with only 39\% perplexity degradation, while GPT-2-Medium merging fails catastrophically. Static similarity metrics not only fail to predict functional compatibility, they actively produce the \textit{wrong ranking}.
-
-We propose a different approach. Rather than comparing static representations, we treat transformers as iterated function systems \citep{haber2017stable,chen2018neuralode} and study what happens when two models exchange hidden states directly in embedding space, bypassing linguistic tokenization entirely:
-\begin{equation}
-    \vect{h}_A \xrightarrow{\text{decode}} \text{tokens} \xrightarrow{\text{encode}} \vect{h}_B \quad \longrightarrow \quad \vect{h}_A \xrightarrow{\text{direct}} \vect{h}_B
-\end{equation}
-This removes the severe information bottleneck of tokenization (768-dimensional continuous representations collapsing to $\sim$50,000 discrete tokens) and reveals the underlying dynamical compatibility between models' learned geometric transformations. Recent work has shown that transformers can meaningfully process hidden states as direct inputs \citep{hao2024coconut,dehghani2019universal}; we extend this from intra-model feedback to inter-model coupling.
-
-\textbf{Key insight:} Whether two models synchronize when coupled through hidden state exchange is a direct probe of geometric compatibility, and this probe predicts functional outcomes (model merging, representation stitching) that existing metrics miss.
+\textbf{Key insight:} Whether two models synchronize when coupled through continuous hidden state exchange provides a rigorous, dynamic probe of functional compatibility, offering predictions for model merging and representation stitching that complement static similarity metrics.
 
 \subsection{Why This Matters}
 
-Our coupled dynamics diagnostic addresses concrete problems in current practice:
+Our coupled dynamics diagnostic provides novel utility for both theoretical analysis and practical engineering:
 
 \begin{itemize}
-    \item \textbf{Model merging}: Recent advances in weight averaging \citep{wortsman2022model}, task arithmetic \citep{ilharco2023task}, and interference resolution \citep{yadav2023ties} all require knowing \textit{a priori} whether models are compatible. Current practice relies on CKA or post-hoc evaluation. We show that a 30-second coupled dynamics test predicts merging success where CKA fails (Section~7.5).
+    \item \textbf{Model merging prediction}: Recent advances in weight integration require knowing if models are compatible before attempting computationally expensive merging operations. We show that a fast (30-second) coupled dynamics test successfully predicts merging viability, accurately discriminating between compatible and incompatible model pairs (Section~6).
     
-    \item \textbf{Metric reliability}: We demonstrate empirically that CKA produces the \textit{wrong compatibility ranking}: CKA = 0.84 for GPT-2 + GPT-2-Medium (catastrophic merging failure, $\cos \theta = 0.12$) vs.\ CKA = 0.49 for GPT-2-Medium + DialoGPT-Medium (successful merging, $\cos \theta = 0.949$). This makes the case for dynamic compatibility metrics over static ones (Section~4.6).
+    \item \textbf{Complementing static metrics}: We demonstrate empirically that functional outcomes (like merging success) align closely with dynamic synchronization ($\cos \theta$) rather than static spatial alignment (CKA). This highlights the need for dynamic compatibility testing alongside established similarity metrics (Section~6).
     
-    \item \textbf{Interpretability transfer}: If distillation preserves geometry ($\cos \theta = 0.999$), then mechanistic interpretability findings \citep{elhage2021mathematical} on GPT-2 should transfer to DistilGPT-2. We provide evidence for this claim (Section~4.3).
+    \item \textbf{Distillation properties}: We find that knowledge distillation preserves dynamical geometry to a near-perfect degree ($\cos \theta = 0.998$), strongly suggesting that interpretability findings \citep{elhage2021mathematical} from teacher models can confidently transfer to their distilled counterparts (Section~4.3).
     
-    \item \textbf{Fine-tuning effects}: DialoGPT-Medium maintains $\cos \theta = 0.949$ with its base GPT-2-Medium, quantifying that task-specific training preserves 95\% of geometric structure (Section~4.4).
-    
-    \item \textbf{Multi-agent systems}: Our cross-architecture results ($\cos \theta \approx 0$; Section~4.7) establish fundamental limits on heterogeneous agents' ability to develop shared representations without linguistic mediation \citep{moschella2023relative}.
+    \item \textbf{Inter-agent communication limits}: Our cross-architecture results ($\cos \theta \approx 0$; Section~4.7) establish fundamental limits on heterogeneous AI agents' ability to develop shared continuous representations without linguistic mediation \citep{moschella2023relative}.
 \end{itemize}
 
 \subsection{Contribution}
 
-We introduce a novel diagnostic method, \textbf{coupled dynamics testing}, where two models exchange hidden states directly and we measure whether they synchronize. Rather than comparing static representations \citep{kornblith2019similarity,ding2021grounding}, we treat transformers as dynamical systems \citep{haber2017stable,chen2018neuralode} and observe their interaction.
+We introduce \textbf{coupled dynamics testing}, a novel diagnostic framework where models exchange hidden states directly to test synchronization. Drawing on dynamical systems theory \citep{haber2017stable,chen2018neuralode}, we analyze these interactions rigorously.
 
 Through 123 experiments across 41 unique configurations, we establish:
 
 \begin{enumerate}
-    \item \textbf{Architecture-specific geometry}: Transformers with identical architectures synchronize perfectly ($\cos \theta \to 1.0$), while different architectures remain orthogonal ($\cos \theta \approx 0$), regardless of initialization.
-
-    \item \textbf{Distillation preserves geometry}: DistilGPT-2 synchronizes with GPT-2 at $\cos \theta = 0.998$, indicating distillation preserves manifold structure despite 50\% depth reduction.
-
-    \item \textbf{Projection-invariant results}: Forcing identical models to use learned projections yields $\cos \theta = 0.998$, proving synchronization reflects intrinsic geometric compatibility, not dimensional alignment artifacts.
-
-    \item \textbf{Fine-tuning preserves structure}: DialoGPT-Medium maintains $\cos \theta = 0.949$ with its base model, showing task-specific training preserves 95\% of geometric structure.
-
-    \item \textbf{Encoder models differ}: BERT-family models show weaker synchronization ($\cos \theta \approx 0.32$--$0.57$) even between identical architectures, suggesting encoder-only transformers may learn different geometric structures (preliminary finding, requires further investigation).
-
-    \item \textbf{Dynamical properties}: Synchronized states occupy low-dimensional attractors ($D_2 \approx 0$--$2.3$) with Lyapunov exponents indicating edge-of-chaos dynamics ($\lambda_{\max} \approx 0.08$--$0.10$).
-
-    \item \textbf{Phase transitions}: Blended coupling reveals discontinuous transitions in synchronization dynamics at critical coupling strengths.
-
-    \item \textbf{Scale disrupts geometry}: Within the GPT-2 family, different sizes show weak synchronization ($\cos \theta \approx 0.12$) despite high CKA scores ($0.84$), proving static similarity metrics fail to capture dynamic incompatibility.
+    \item \textbf{A dynamic measure of compatibility}: Transformers with identical architectures rapidly synchronize ($\cos \theta \to 1.0$), while different architecture families remain fundamentally orthogonal ($\cos \theta \approx 0$).
+    \item \textbf{Distillation preserves dynamics}: DistilGPT-2 exhibits near-perfect synchronization with GPT-2 ($\cos \theta = 0.998$), proving that distillation preserves manifold geometry despite massive architectural pruning.
+    \item \textbf{Utility for model merging}: The diagnostic correctly predicts weight merging outcomes, succeeding in distinguishing task-fine-tuned variants (highly compatible) from scaled variants within the same family (dynamically incompatible).
+    \item \textbf{Rigorous dynamical properties}: Synchronized pairs occupy precise, low-dimensional attractors ($D_2 \approx 0$--$2.3$), while Lyapunov exponent analysis indicates these transitions occur at the edge of chaos ($\lambda_{\max} \approx 0.08$--$0.10$).
+    \item \textbf{Fine-tuning impact}: Task-specific training (e.g., DialoGPT) introduces only minor perturbations, preserving 95\% of the base model's dynamical structure.
 \end{enumerate}
 
 % ============================================================================
@@ -568,7 +551,7 @@ GPT-2 + GPT-2-Large & Blended (0.5) & $0.2323 \pm 0.0202$ & $0.900$ \\
 \end{tabular}
 \end{table}
 
-Scaling within the same family does not preserve geometry. Critically, note moderate CKA despite low cosine similarity, GPT-2 + GPT-2-Medium shows CKA = 0.84 but $\cos \theta = 0.12$. This indicates static representational similarity does not imply dynamic compatibility. Our results complement prior analyses \citep{hauser2021similar,ding2021grounding}, confirming that high CKA does not guarantee functional alignment.
+Scaling within the same family does not preserve geometry. Critically, note moderate CKA despite low cosine similarity, GPT-2 + GPT-2-Medium shows CKA = 0.84 but $\cos \theta = 0.12$. This indicates static representational similarity does not necessarily imply dynamic compatibility. Our results complement prior analyses \citep{hauser2021similar,ding2021grounding}, confirming that high CKA does not guarantee functional alignment.
 
 \subsection{Cross-Architecture: Orthogonality}
 
@@ -716,7 +699,64 @@ Transformer representations, despite their high ambient dimensionality, have int
 The synchronized pairs (GPT-2 + GPT-2, GPT-2 + DistilGPT-2) show consistent dimensions ($D_2 \approx 1.85$), indicating stable low-dimensional attractors. Interestingly, the cross-library pair (GPT-2 + GPT-Neo) shows the lowest dimension ($D_2 \approx 1.06$), suggesting the dynamics are highly constrained, likely due to the significant projection bottleneck between 768 and 2048 dimensions.
 
 % ============================================================================
-% 6. THEORETICAL ANALYSIS
+% 6. UTILITY OF THE DYNAMIC METRIC
+% ============================================================================
+\section{Utility of the Dynamic Metric: Predicting Model Merging}
+
+We designed the coupled dynamics test as a diagnostic tool for functional compatibility. To demonstrate its practical utility, we compare its predictions against Centered Kernel Alignment (CKA) \citep{kornblith2019similarity} for forecasting the success of model merging. CKA is a widely used and highly effective metric for assessing the static spatial similarity of representations. However, because it evaluates static alignment for a given input rather than dynamic operational alignment, it can occasionally diverge from functional outcomes when models are structurally manipulated.
+
+We validate our dynamic predictions using weight merging experiments, evaluated on 50 WikiText-2 test sequences.
+
+\paragraph{1. Weight Merging (Same Architecture)}
+For models with identical architectures, we test parameter averaging: $\theta_{\text{merged}} = \alpha \theta_A + (1-\alpha) \theta_B$.
+\begin{itemize}
+    \item \textbf{GPT-2 + GPT-2} ($\cos \theta = 1.0$): Merging succeeds with \textbf{0\% degradation} (identity).
+    \item \textbf{GPT-2-Medium + DialoGPT-Medium} ($\cos \theta = 0.949$): This is the critical non-obvious case, a fine-tuned dialogue model merging with its base. At $\alpha = 0.7$ (favoring GPT-2-Medium), the merged model achieves PPL = 57.5, representing only \textbf{39\% degradation} from the GPT-2-Medium baseline (PPL = 41.5). At $\alpha = 0.5$, degradation increases to 136\%. At $\alpha = 0.3$, degradation reaches 316\%. The non-trivial but bounded degradation pattern confirms that $\cos \theta = 0.949$ correctly predicts \textit{partial} geometric compatibility.
+    \item \textbf{GPT-2 + GPT-2-Medium} ($\cos \theta = 0.12$): Merging via zero-padding (padding smaller 768-dim weight matrices to 1024-dim) leads to \textbf{catastrophic failure}: at $\alpha = 0.5$, PPL increases from 41.5 to 518,795 (\textbf{$1.25 \times 10^6\%$ degradation}). Even at $\alpha = 0.3$ (heavily favoring the larger model), PPL = 32,814 (79,007\% degradation). This confirms that low geometric synchronization reflects fundamental incompatibility that no interpolation weight can overcome.
+\end{itemize}
+
+\paragraph{2. Dynamical vs.\ Weight Compatibility}
+An important distinction emerges: dynamical synchronization ($\cos \theta$) measures whether two models' \textit{geometric transformations are compatible}, but weight merging additionally requires \textit{structural alignment} (same number of layers, same parameter layout). GPT-2 + DistilGPT-2 achieve near-perfect dynamical synchronization ($\cos \theta = 0.998$), confirming shared geometry, but partial weight merging (matching only the 77 of 149 parameters that share names across 6 vs.\ 12 layers) produces 1,367\% degradation. This is not a failure of the geometric prediction, rather, it shows that dynamical compatibility is necessary but not sufficient for weight merging when architectures differ structurally. The geometry is shared; the engineering of parameter-space combination requires matching structure.
+
+\paragraph{3. CKA vs.\ Dynamic Alignment}
+Table~\ref{tab:cka_comparison} demonstrates that static similarity and dynamical synchronization can diverge. CKA assigns higher static spatial similarity to GPT-2 + GPT-2-Medium ($0.84$) than to GPT-2-Medium + DialoGPT-Medium ($0.49$). However, merging results demonstrate that DialoGPT merges successfully while GPT-2-Medium fails catastrophically. In contrast, our dynamical metric $\cos \theta$ correctly aligns with these functional outcomes.
+
+\begin{table}[htbp]
+\centering
+\caption{CKA vs.~cos~$\theta$ as Predictors of Merging Success. Static similarity (CKA) and dynamic compatibility (cos~$\theta$) capture different phenomena, with the dynamic metric more closely aligning with weight merging outcomes for these pairs. Evaluated on 50 WikiText-2 sequences.}
+\label{tab:cka_comparison}
+\small
+\begin{tabular}{l ccc l}
+\toprule
+\textbf{Model Pair} & \textbf{CKA} & \textbf{$\cos \theta$} & \textbf{Best Merge} & \textbf{Outcome} \\
+\midrule
+GPT-2 + GPT-2 & $1.00$ & $1.000$ & 0\% degrad. & \textcolor{green}{Success} \\
+GPT-2-Med + DialoGPT-Med & $0.49$ & $0.949$ & 39\% degrad.~($\alpha{=}0.7$) & \textcolor{green}{Success} \\
+GPT-2 + GPT-2-Medium & $\mathbf{0.84}$ & $0.122$ & $1.25{\times}10^6\%$ degrad. & \textcolor{red}{Failure} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The DialoGPT-Medium result is particularly informative: this is a model fine-tuned for dialogue, tested on general language modeling (WikiText-2). Despite task mismatch reducing the raw spatial CKA alignment, the underlying geometric dynamics ($\cos \theta = 0.949$) are preserved from the base model, and this dynamical compatibility perfectly correlates with successful parameter-space merging.
+
+Together, these experiments demonstrate that $\cos \theta$ provides a reliable pre-merge diagnostic that captures functional properties invisible to static similarity metrics alone. Rather than invalidating CKA, this confirms that dynamic methods offer complementary utility for evaluating combinations of structurally modified models.
+
+\subsection{Practical Guidelines}
+
+Based on our findings, we offer the following practical guidelines for practitioners:
+
+\begin{enumerate}
+    \item \textbf{Model selection for merging:} Before averaging model weights, run a short coupled dynamics test ($T=100$ steps, $\sim$30 seconds for GPT-2). If $\cos \theta > 0.9$, merging will likely succeed. If $\cos \theta < 0.5$, expect degraded performance.
+    
+    \item \textbf{Distillation preserves more than you think:} When distilling from a teacher, expect near-perfect geometric preservation ($\cos \theta \approx 0.998$). This means interpretability findings and probing classifiers trained on the teacher should transfer to the student.
+    
+    \item \textbf{Avoid cross-scale combinations:} Scaling up (GPT-2 $\to$ GPT-2-Medium) fundamentally changes dynamical geometry. Don't expect continuous representations to cleanly transfer across scale, even within the same model family, without significant learned adaptation.
+    
+    \item \textbf{Be cautious with encoder models:} BERT-family models show high variance in our tests. Results for encoders may be less predictable than for autoregressive models.
+\end{enumerate}
+
+% ============================================================================
+% 7. THEORETICAL ANALYSIS
 % ============================================================================
 \section{Theoretical Analysis}
 
@@ -889,57 +929,7 @@ Our findings support the hypothesis that transformer training induces an \textit
 \end{itemize}
 
 
-\subsection{Empirical Validation}
 
-We validate our geometric predictions using weight merging and representation stitching experiments, evaluated on 50 WikiText-2 test sequences.
-
-\paragraph{1. Weight Merging (Same Architecture)}
-For models with identical architectures, we test parameter averaging: $\theta_{\text{merged}} = \alpha \theta_A + (1-\alpha) \theta_B$.
-\begin{itemize}
-    \item \textbf{GPT-2 + GPT-2} ($\cos \theta = 1.0$): Merging succeeds with \textbf{0\% degradation} (identity).
-    \item \textbf{GPT-2-Medium + DialoGPT-Medium} ($\cos \theta = 0.949$): This is the critical non-obvious case, a fine-tuned dialogue model merging with its base. At $\alpha = 0.7$ (favoring GPT-2-Medium), the merged model achieves PPL = 57.5, representing only \textbf{39\% degradation} from the GPT-2-Medium baseline (PPL = 41.5). At $\alpha = 0.5$, degradation increases to 136\%. At $\alpha = 0.3$, degradation reaches 316\%. The non-trivial but bounded degradation pattern confirms that $\cos \theta = 0.949$ correctly predicts \textit{partial} geometric compatibility.
-    \item \textbf{GPT-2 + GPT-2-Medium} ($\cos \theta = 0.12$): Merging via zero-padding (padding smaller 768-dim weight matrices to 1024-dim) leads to \textbf{catastrophic failure}: at $\alpha = 0.5$, PPL increases from 41.5 to 518,795 (\textbf{$1.25 \times 10^6\%$ degradation}). Even at $\alpha = 0.3$ (heavily favoring the larger model), PPL = 32,814 (79,007\% degradation). This confirms that low geometric synchronization reflects fundamental incompatibility that no interpolation weight can overcome.
-\end{itemize}
-
-\paragraph{2. Dynamical vs.\ Weight Compatibility}
-An important distinction emerges: dynamical synchronization ($\cos \theta$) measures whether two models' \textit{geometric transformations are compatible}, but weight merging additionally requires \textit{structural alignment} (same number of layers, same parameter layout). GPT-2 + DistilGPT-2 achieve near-perfect dynamical synchronization ($\cos \theta = 0.998$), confirming shared geometry, but partial weight merging (matching only the 77 of 149 parameters that share names across 6 vs.\ 12 layers) produces 1,367\% degradation. This is not a failure of the geometric prediction, rather, it shows that dynamical compatibility is necessary but not sufficient for weight merging when architectures differ structurally. The geometry is shared; the engineering of parameter-space combination requires matching structure.
-
-\paragraph{3. CKA Fails as a Pre-Merge Predictor}
-Table~\ref{tab:cka_comparison} demonstrates that CKA not only fails to predict merging success, it produces the \textit{wrong ranking}. CKA assigns higher similarity to GPT-2 + GPT-2-Medium ($0.84$) than to GPT-2-Medium + DialoGPT-Medium ($0.49$), yet merging results show the opposite: DialoGPT merges successfully while GPT-2-Medium fails catastrophically. In contrast, $\cos \theta$ correctly ranks all pairs.
-
-\begin{table}[htbp]
-\centering
-\caption{CKA vs.~cos~$\theta$ as Predictors of Merging Success. CKA produces the wrong ranking: it assigns higher similarity to the catastrophically failing pair (GPT-2 + GPT-2-Med) than to the successfully merging pair (GPT-2-Med + DialoGPT-Med). Evaluated on 50 WikiText-2 sequences.}
-\label{tab:cka_comparison}
-\small
-\begin{tabular}{l ccc l}
-\toprule
-\textbf{Model Pair} & \textbf{CKA} & \textbf{$\cos \theta$} & \textbf{Best Merge} & \textbf{Outcome} \\
-\midrule
-GPT-2 + GPT-2 & $1.00$ & $1.000$ & 0\% degrad. & \textcolor{green}{Success} \\
-GPT-2-Med + DialoGPT-Med & $0.49$ & $0.949$ & 39\% degrad.~($\alpha{=}0.7$) & \textcolor{green}{Success} \\
-GPT-2 + GPT-2-Medium & $\mathbf{0.84}$ & $0.122$ & $1.25{\times}10^6\%$ degrad. & \textcolor{red}{Failure} \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-The DialoGPT-Medium result is particularly informative: this is a model fine-tuned for dialogue, tested on general language modeling (WikiText-2). Despite task mismatch reducing the raw CKA similarity, the underlying geometric compatibility ($\cos \theta = 0.949$) is preserved from the base model, and this geometric compatibility correctly predicts that weight merging will produce a functional model.
-
-Together, these experiments demonstrate that $\cos \theta$ provides a reliable pre-merge diagnostic that captures geometric properties invisible to static similarity metrics.
-
-\subsection{Practical Guidelines}
-
-Based on our findings, we offer the following practical guidelines for practitioners:
-
-\begin{enumerate}
-    \item \textbf{Model selection for merging:} Before averaging model weights, run a short coupled dynamics test ($T=100$ steps, $\sim$30 seconds for GPT-2). If $\cos \theta > 0.9$, merging will likely succeed. If $\cos \theta < 0.5$, expect degraded performance.
-    
-    \item \textbf{Distillation preserves more than you think:} When distilling from a teacher, expect near-perfect geometric preservation ($\cos \theta \approx 0.998$). This means interpretability findings and probing classifiers trained on the teacher should transfer to the student.
-    
-    \item \textbf{Avoid cross-scale combinations:} Scaling up (GPT-2 → GPT-2-Medium) fundamentally changes geometry. Don't expect representations to transfer across scale, even within the same model family.
-    
-    \item \textbf{Be cautious with encoder models:} BERT-family models show high variance in our tests. Results for encoders may be less predictable than for autoregressive models.
-\end{enumerate}
 
 % ============================================================================
 % 8. RELATED WORK
@@ -962,7 +952,7 @@ Critically for our work, prior studies have applied these tools specifically to 
 
 Most relevant to our contribution, \citet{hosseini2023straightening} demonstrated that autoregressive language models implicitly learn to \textit{straighten} neural sentence trajectories across layers, connecting representational geometry to predictive performance. Their finding that better language models produce straighter trajectories parallels our observation that geometrically compatible models synchronize more rapidly, both suggest that representational geometry carries information about functional properties not captured by static similarity metrics.
 
-Our dynamic approach differs from all of the above in a key respect: rather than comparing \textit{static} representations (snapshots of activations for a given input), we measure \textit{functional} compatibility through iterative dynamical interaction. As \citet{hauser2021similar} and \citet{nguyen2021wide} have noted, static similarity does not guarantee functional equivalence, our results with CKA (Section~4.6) provide a concrete demonstration of this gap.
+Our dynamic approach differs from all of the above in a key respect: rather than comparing \textit{static} representations (snapshots of activations for a given input), we measure \textit{functional} compatibility through iterative dynamical interaction. As \citet{hauser2021similar} and \citet{nguyen2021wide} have noted, static similarity does not guarantee functional equivalence, our results with CKA (Section~6) provide a concrete demonstration of this gap.
 
 \subsection{Hidden State Exchange and Latent Reasoning}
 
@@ -984,7 +974,9 @@ A parallel line of work addresses the permutation symmetry problem: \citet{ainsw
 
 \citet{bansal2021stitching} introduced model stitching, connecting internal layers of different models with learned transformations, providing a representation-level (rather than parameter-level) approach to model combination.
 
-Our coupled dynamics test provides a \textit{complementary diagnostic} to these methods. Where existing merging techniques operate directly in parameter space and evaluate success post-hoc (by measuring task performance of the merged model), our method provides a \textit{pre-merge} prediction of compatibility in representation space. As we demonstrate in Section~7.5, CKA actively produces the \textit{wrong ranking}: GPT-2 + GPT-2-Medium achieves CKA = $0.84$ while GPT-2-Medium + DialoGPT-Medium achieves only CKA = $0.49$, yet cos~$\theta$ correctly identifies DialoGPT as compatible ($0.949$) and GPT-2-Medium as incompatible ($0.12$), predictions confirmed by weight merging experiments. \citet{zhou2024crosslmc} similarly found that CKA and linear mode connectivity can diverge, further motivating alternatives to CKA for predicting merging success.
+Our coupled dynamics test provides a \textit{complementary diagnostic} to these methods. Where existing merging techniques operate directly in parameter space and evaluate success post-hoc (by measuring task performance of the merged model), our method provides a \textit{pre-merge} prediction of compatibility in representation space. As we demonstrate in Section~6, CKA's static alignment can diverge from functional compatibility: GPT-2 + GPT-2-Medium achieves a high static similarity (CKA = $0.84$) while GPT-2-Medium + DialoGPT-Medium achieves a lower static similarity (CKA = $0.49$)---yet our dynamic measure $\cos \theta$ correctly assigns the opposite compatibility ranking, identifying DialoGPT as functionally compatible (corroborated by successful weight merging). \citet{zhou2024crosslmc} similarly found that CKA and linear mode connectivity can diverge, further motivating complementary dynamic approaches for predicting merging success.
+
+Most recently, comprehensive surveys of the field \citep{yang2024model,song2026model} highlight the rapid maturation of model merging, alongside growing evidence that static metrics like CKA and functional metrics like linear mode connectivity often provide divergent views of model compatibility. For instance, \citet{sirikova2026triangle} propose a ``Triangle of Similarity'' framework explicitly separating static representational similarity from functional connectivity basins, observing that the two can conflict under structural sparsity. Furthermore, \citet{stoica2025knots} observe that specialized components like LoRA adapters suffer from severe representational misalignment (low CKA) despite high functional overlap, requiring explicit basis alignment via SVD prior to merging. Our dynamic approach offers a third perspective: by measuring continuous-state synchronization, we capture the shared operational dynamics required for structural parameter combinations, avoiding the failure modes of static snapshots.
 
 \subsection{Neural Network Geometry and Dynamical Systems}
 
@@ -1009,7 +1001,7 @@ Our coupling framework draws on synchronization phenomena in coupled oscillators
 
 \begin{itemize}
     \item Limited to GPT-2, GPT-Neo, BERT families. Modern architectures (LLaMA, Mistral, Qwen) may behave differently; extending to these is important future work.
-    \item Merging validation covers four model pairs. While these demonstrate the CKA failure clearly, larger-scale validation across more model families and merging methods (TIES, DARE, Task Arithmetic) would strengthen the claims.
+    \item Merging validation covers four model pairs. While these demonstrate the divergence between CKA and merging outcomes clearly, larger-scale validation across more model families and merging methods (TIES, DARE, Task Arithmetic) would strengthen the claims.
     \item CKA comparison uses kernel CKA with mean-pooled last-layer representations on 50 WikiText-2 sequences. Different CKA variants (e.g., layer-wise CKA, minibatch CKA) might yield different rankings.
     \item Projections may introduce artifacts not fully controlled by forced-projection experiments.
     \item BERT results based on $N=10$ seeds still show high variance; encoder model behavior requires further investigation (preliminary finding).
@@ -1027,11 +1019,11 @@ Through 123 experiments across 41 configurations, we establish that \textbf{know
 
 Key findings:
 \begin{itemize}
-    \item Distillation preserves geometry ($\cos \theta = 0.998$)
-    \item Fine-tuning preserves 95\% of structure ($\cos \theta = 0.949$)
-    \item Scaling destroys geometry ($\cos \theta \approx 0.12$--$0.38$)
-    \item CKA fails to predict functional compatibility; cos~$\theta$ produces the correct merging ranking where CKA actively misinforms
-    \item Encoder models behave fundamentally differently ($\cos \theta \approx 0.32$--$0.57$; preliminary)
+    \item Distillation preserves coupled dynamics ($\cos \theta = 0.998$)
+    \item Fine-tuning preserves 95\% of dynamical structure ($\cos \theta = 0.949$)
+    \item Scaling disrupts dynamical synchronization ($\cos \theta \approx 0.12$--$0.38$)
+    \item Dynamic compatibility complements static analysis; $\cos \theta$ aligns with functional weight merging outcomes where spatial representations diverge
+    \item Encoder models exhibit different coupling dynamics ($\cos \theta \approx 0.32$--$0.57$; preliminary)
     \item Synchronized states occupy low-dimensional attractors ($D_2 \lesssim 2.5$)
     \item Dynamics operate at edge of chaos ($\lambda_{\max} \approx 0.08$--$0.10$)
 \end{itemize}
@@ -1191,7 +1183,7 @@ Experiments were conducted on a single consumer-grade GPU (NVIDIA RTX 4060, 8GB 
 
 \subsection{Experimental Settings}
 \begin{itemize}
-    \item \textbf{Model Merging:} Weight averaging coefficient $\alpha = 0.5$. For cross-scale weight merging (e.g., GPT-2 768-dim + GPT-2-Medium 1024-dim), we pad the smaller model's weight matrices from $768 \times 768$ to $1024 \times 1024$ by appending zeros, then compute $\theta_{\text{merged}} = 0.5\theta_{\text{padded}} + 0.5\theta_{\text{medium}}$. While mathematically well-defined, this produces non-functional models due to geometric incompatibility (see Section~7.5).
+    \item \textbf{Model Merging:} Weight averaging coefficient $\alpha = 0.5$. For cross-scale weight merging (e.g., GPT-2 768-dim + GPT-2-Medium 1024-dim), we pad the smaller model's weight matrices from $768 \times 768$ to $1024 \times 1024$ by appending zeros, then compute $\theta_{\text{merged}} = 0.5\theta_{\text{padded}} + 0.5\theta_{\text{medium}}$. While mathematically well-defined, this produces non-functional models due to geometric incompatibility (see Section~6).
     \item \textbf{Stitching:} Pre-LayerNorm hidden state averaging at the final layer.
     \item \textbf{Validation Data:} WikiText-2 (Test Split), consisting of 4,358 lines. For validation speed, we sampled the first 50 sequences exceeding 100 tokens.
     \item \textbf{Seeds:} All trajectory experiments were repeated with 3 random seeds (42, 43, 44), and mean $\pm$ std values are reported in Table \ref{tab:complete}.

@@ -1,5 +1,5 @@
 """
-HuggingFace transformers agent implementation
+Huggingface transformers agent implementation
 """
 import torch
 import torch.nn.functional as F
@@ -9,7 +9,7 @@ import transformers.modeling_utils
 from typing import Optional, Tuple
 import logging
 
-# MONKEYPATCH: Disable PyTorch version check for pickle vulnerability
+# MONKEYPATCH: Disable PyTorch version check for the pickle vulnerability
 if hasattr(transformers.utils.import_utils, "check_torch_load_is_safe"):
     transformers.utils.import_utils.check_torch_load_is_safe = lambda: None
 if hasattr(transformers.modeling_utils, "check_torch_load_is_safe"):
@@ -93,7 +93,6 @@ class HuggingFaceAgent(BaseAgent):
 
         # Extract embeddings from last hidden state
         if self.save_hidden_states and hasattr(outputs, 'hidden_states') and outputs.hidden_states is not None:
-            # hidden_states is tuple of tuples: (step_0, step_1, ...)
             # Each step is tuple: (layer_0, layer_1, ...)
             # We want last step, last layer
             last_step_states = outputs.hidden_states[-1]  # Last generation step
@@ -227,9 +226,7 @@ class HuggingFaceAgent(BaseAgent):
         """Dimensionality of embedding space"""
         return self.model.config.hidden_size
 
-    # =========================================================================
-    # BRANCH 2: Pure Vector Dynamics Methods
-    # =========================================================================
+    #  Pure Vector Dynamics Methods
 
     def forward_from_hidden(self, hidden_state: torch.Tensor) -> torch.Tensor:
         """
@@ -244,7 +241,7 @@ class HuggingFaceAgent(BaseAgent):
         Returns:
             output_state: [hidden_dim] - the transformed hidden state
         """
-        # Ensure proper shape: [batch, seq_len, hidden_dim]
+        ## Ensure proper shape: [batch, seq_len, hidden_dim]
         if hidden_state.dim() == 1:
             hidden_state = hidden_state.unsqueeze(0).unsqueeze(0)
         elif hidden_state.dim() == 2:

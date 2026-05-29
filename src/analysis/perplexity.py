@@ -1,10 +1,5 @@
-"""
-Perplexity Computation Module
+#Perplexity Computation Module
 
-Canonical implementation of perplexity measurement for language models.
-Consolidates the duplicated compute_perplexity() functions that were
-scattered across 5+ ad-hoc scripts.
-"""
 import torch
 import numpy as np
 from tqdm import tqdm

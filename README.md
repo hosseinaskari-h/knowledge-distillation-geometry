@@ -1,29 +1,26 @@
-# Emergent Protocols: Replication Hub
+# Knowledge Distillation Geometry - Rvised
 
-This directory contains the full source code and interactive GUI for replicating the findings in:
-**"Knowledge Distillation Preserves Representational Geometry"**
+This folder contains the complete, validated codebase for the paper "Knowledge Distillation Preserves Representational Geometry".
+
+## Contents
+
+- `src/`: Core library for vector dynamics and analysis.
+- `paper/`: LaTeX source for the paper (`main.tex`).
+- `run_experiments.py`: CLI runner for all experiments.
+- `requirements.txt`: Python dependencies.
 
 ## Quick Start
 
-1. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+1.  **Install Dependencies**:
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-2. Launch the Replication GUI:
-   ```bash
-   python emergent_gui.py
-   ```
+2.  **Reproduce Paper Results**:
+    Run the full suite (123 experiments) as described in Appendix B.1:
+    ```bash
+    python run_experiments.py --experiment reproduction --steps 100
+    ```
+    Results will be saved to `data/reproduction/`.
 
-## Features
 
-- **Vector Dynamics:** Visualize coupled transformer dynamics in real-time.
-- **Merging Validation:** Interactive validation of weight merging and stitching.
-- **Batch Replication:** One-click execution of all 123 experiments from the paper.
-- **Embeddings:** 3D visualization of the representation manifolds.
-
-## Structure
-
-- `emergent_gui.py`: Main entry point.
-- `src/`: Core logic (Agents, Training, Analysis).
-- `configs/`: Experiment configuration files.
